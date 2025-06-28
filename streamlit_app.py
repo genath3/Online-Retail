@@ -14,14 +14,20 @@ st.title("Xiaomi Phones")
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
+import requests
+from io import StringIO
+
 @st.cache_data
 def load_data():
-    file_path = hf_hub_download(
-    repo_id="genath3/Xiaomi",         # exact user/repo name
-    filename="xiaomi_cleaned.csv",    # just the file name
-    token=st.secrets["huggingface"]["token"]
-    )
-    df = pd.read_csv(file_path)
+    url = "https://huggingface.co/datasets/genath3/Xiaomi/resolve/main/xiaomi_cleaned.csv"
+    headers = {"Authorization": f"Bearer {st.secrets['huggingface']['token']}"}
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        st.error(f"Failed to fetch file. Status code: {response.status_code}")
+        st.stop()
+
+    df = pd.read_csv(StringIO(response.text))
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
