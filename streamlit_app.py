@@ -1,56 +1,3 @@
-import streamlit as st
-import pandas as pd
-import numpy as np
-import plotly.express as px
-
-# --- CONFIG ---
-st.set_page_config(page_title="Xiaomi Phone Dashboard", layout="wide")
-
-# --- HEADER ---
-st.title("Xiaomi Phones Dashboard")
-st.markdown("This dashboard provides insights into Xiaomi phone user interactions and sales for the month of October 2019.")
-
-# --- LOAD DATA ---
-@st.cache_data
-def load_data():
-    url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/xiaomi_cleaned.csv"
-    df = pd.read_csv(url)
-    df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
-    df["brand"] = df["brand"].astype(str).str.lower()
-    df = df[df["brand"] == "xiaomi"]
-    return df
-
-df = load_data()
-
-# --- BASIC CLEANING ---
-df = df.dropna(subset=["event_time", "event_type", "price"])  # price may be NaN for views
-df["date"] = df["event_time"].dt.date
-df["hour"] = df["event_time"].dt.hour
-df["weekday"] = df["event_time"].dt.day_name()
-
-df = load_data()
-df = df.dropna(subset=["event_time", "event_type", "price"])
-df["date"] = df["event_time"].dt.date
-df["hour"] = df["event_time"].dt.hour
-df["weekday"] = df["event_time"].dt.day_name()
-
-# --- METRICS ---
-views = df[df["event_type"] == "view"]
-purchases = df[df["event_type"] == "purchase"]
-total_views = len(views)
-total_purchases = len(purchases)
-conversion_rate = (total_purchases / total_views * 100) if total_views else 0
-avg_price = purchases["price"].mean()
-
-# --- TABS ---
-tab1, tab2, tab3, tab4, tab5 = st.tabs([
-    "\U0001F4CA Market Overview",
-    "⏰ Time Analysis",
-    "\U0001F6CD Basket & Pricing",
-    "\U0001F9EA Customer Segments",
-    "\U0001F52E Predictive Insights"
-])
-
 # Xiaomi Dashboard with Modeling and Advanced Analysis
 
 import streamlit as st
@@ -70,8 +17,12 @@ st.markdown("This dashboard provides insights into Xiaomi phone interactions, sa
 # --- LOAD DATA ---
 @st.cache_data
 def load_data():
-    url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/Smartphones_PARSED.csv"
-    df = pd.read_csv(url)
+    import requests
+    from io import StringIO
+    url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/xiaomi_cleaned.csv"
+    headers = {"Authorization": f"Bearer {st.secrets['huggingface']['token']}"}
+    response = requests.get(url, headers=headers)
+    df = pd.read_csv(StringIO(response.text))
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
@@ -221,6 +172,8 @@ with tab5:
         \U0001F9E0 <b>Insight:</b> A simple model using price and time can moderately predict purchase behavior. Integrate with campaigns.
         </div>
     """, unsafe_allow_html=True)
+
+
 
 
 
