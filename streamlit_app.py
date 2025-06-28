@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
-st.title("\U0001F4F1 Xiaomi Phones - October 2019 Dashboard")
+st.title("\U0001F4F1 Xiaomi Phones")
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
@@ -20,11 +20,12 @@ from huggingface_hub import hf_hub_download
 @st.cache_data
 
 def load_data():
-    file_path = hf_hub_download(
-        repo_id="7ng10dpE",
-        filename="Online-Retail/xiaomi_cleaned.csv",
+      file_path = hf_hub_download(
+        repo_id="7ng10dpE/Online-Retail", 
+        filename="xiaomi_cleaned.csv",     
         token=st.secrets["huggingface"]["token"]
     )
+
     df = pd.read_csv(file_path)
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
