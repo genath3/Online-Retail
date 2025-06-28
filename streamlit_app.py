@@ -16,25 +16,16 @@ st.markdown("This dashboard provides insights into Xiaomi phone interactions, sa
 
 # --- LOAD DATA ---
 @st.cache_data
+from huggingface_hub import hf_hub_download
+
+@st.cache_data
 def load_data():
-    import requests
-    from io import StringIO
-
-    url = "https://huggingface.co/datasets/7ng10dpE/resolve/main/Online-Retail/xiaomi_cleaned.csv"
-    headers = {"Authorization": f"Bearer {st.secrets['huggingface']['token']}"}
-
-    response = requests.get(url, headers=headers)
-    if response.status_code != 200:
-        st.error(f"Failed to load data from Hugging Face. Status: {response.status_code}")
-        st.stop()
-
-    df = pd.read_csv(StringIO(response.text))
-
-    if "event_time" not in df.columns:
-        st.error("Column 'event_time' not found in dataset. Check file format.")
-        st.write("Columns received:", df.columns.tolist())
-        st.stop()
-
+    file_path = hf_hub_download(
+        repo_id="7ng10dpE/Online-Retail",
+        filename="xiaomi_cleaned.csv",
+        token=st.secrets["huggingface"]["token"]
+    )
+    df = pd.read_csv(file_path)
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
