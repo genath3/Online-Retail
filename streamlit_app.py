@@ -28,7 +28,7 @@ df["date"] = df["event_time"].dt.date
 df["hour"] = df["event_time"].dt.hour
 df["weekday"] = df["event_time"].dt.day_name()
 
-# --- KPI METRICS ---
+# --- METRICS ---
 views = df[df["event_type"] == "view"]
 purchases = df[df["event_type"] == "purchase"]
 total_views = len(views)
@@ -36,60 +36,91 @@ total_purchases = len(purchases)
 conversion_rate = (total_purchases / total_views * 100) if total_views else 0
 avg_price = purchases["price"].mean()
 
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("👀 Total Views", f"{total_views:,}")
-col2.metric("🛒 Total Purchases", f"{total_purchases:,}")
-col3.metric("🎯 Conversion Rate", f"{conversion_rate:.1f}%")
-col4.metric("💸 Avg. Purchase Price", f"${avg_price:.2f}")
-
 # --- TABS ---
-tab1, tab2, tab3, tab4 = st.tabs(["📊 Daily Activity", "⏰ Time of Day", "🧺 Basket & Price", "📈 Funnel Analysis"])
+tab1, tab2, tab3 = st.tabs(["📊 Market Overview", "⏰ Time Analysis", "🧺 Basket & Price"])
 
-# --- TAB 1: DAILY TRENDS ---
+# --- TAB 1: MARKET OVERVIEW ---
 with tab1:
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("👀 Total Views", f"{total_views:,}")
+    col2.metric("🛒 Purchases", f"{total_purchases:,}")
+    col3.metric("🎯 Conversion Rate", f"{conversion_rate:.1f}%")
+    col4.metric("💸 Avg. Price", f"${avg_price:.2f}")
+
+    # --- Daily Events Stacked Bar ---
+    st.subheader("Daily Xiaomi Events")
+    st.markdown("This stacked bar chart shows how different types of user interactions (views, purchases) evolved each day.")
     daily_counts = df.groupby(["date", "event_type"]).size().reset_index(name="count")
-    fig = px.line(daily_counts, x="date", y="count", color="event_type", markers=True,
-                  title="📆 Daily Xiaomi Events")
-    st.plotly_chart(fig, use_container_width=True)
+    fig_bar = px.bar(daily_counts, x="date", y="count", color="event_type", barmode="stack",
+                     labels={"date": "Date", "count": "Event Count", "event_type": "Event Type"},
+                     title="📅 Daily Interaction Volume")
+    st.plotly_chart(fig_bar, use_container_width=True)
 
-# --- TAB 2: HOURLY HEATMAP ---
+    # --- Conversion Funnel ---
+    st.subheader("Conversion Funnel")
+    st.markdown("The funnel below illustrates the conversion from product views to purchases for Xiaomi phones.")
+    funnel_data = pd.DataFrame({
+        "Stage": ["Viewed", "Purchased"],
+        "Count": [total_views, total_purchases]
+    })
+    fig_funnel = px.funnel(funnel_data, y="Stage", x="Count", title="🔁 Xiaomi Funnel: Views to Purchases")
+    st.plotly_chart(fig_funnel, use_container_width=True)
+
+    # --- Insight Box ---
+    st.markdown(
+        """
+        <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
+        🧠 <b>Insight:</b> The overall conversion rate is {:.1f}%, suggesting potential to improve the purchase rate through better retargeting or pricing strategies.
+        </div>
+        """.format(conversion_rate), unsafe_allow_html=True
+    )
+
+# --- TAB 2: TIME ANALYSIS ---
 with tab2:
-    heatmap_data = df.groupby(["weekday", "hour", "event_type"]).size().reset_index(name="count")
-    weekdays_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-    heatmap_data["weekday"] = pd.Categorical(heatmap_data["weekday"], categories=weekdays_order, ordered=True)
+    st.subheader("Products Viewed")
+    view_heat = views.groupby(["weekday", "hour"]).size().reset_index(name="count")
+    heatmap1 = view_heat.pivot(index="weekday", columns="hour", values="count").fillna(0)
+    fig_view = px.imshow(heatmap1, aspect="auto", text_auto=True, color_continuous_scale="Blues",
+                         title="Products Viewed")
+    st.plotly_chart(fig_view, use_container_width=True)
 
-    for etype in heatmap_data["event_type"].unique():
-        st.subheader(f"🔹 Hourly Heatmap - {etype.title()}")
-        subset = heatmap_data[heatmap_data["event_type"] == etype]
-        heatmap = subset.pivot_table(index="weekday", columns="hour", values="count", fill_value=0)
-        fig = px.imshow(heatmap, text_auto=True, aspect="auto", color_continuous_scale="Blues",
-                        labels={"color": "Count"}, title=f"Heatmap of {etype.title()} Events by Hour & Weekday")
-        st.plotly_chart(fig, use_container_width=True)
+    st.subheader("Products Purchased")
+    purchase_heat = purchases.groupby(["weekday", "hour"]).size().reset_index(name="count")
+    heatmap2 = purchase_heat.pivot(index="weekday", columns="hour", values="count").fillna(0)
+    fig_purchase = px.imshow(heatmap2, aspect="auto", text_auto=True, color_continuous_scale="Reds",
+                             title="Products Purchased")
+    st.plotly_chart(fig_purchase, use_container_width=True)
 
-# --- TAB 3: PRICE & BASKET ---
+    # --- Insight Box ---
+    st.markdown(
+        """
+        <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
+        🧠 <b>Insight:</b> Most Xiaomi product views and purchases occur in the evening. Consider timing campaigns between 6–10 PM for maximum impact.
+        </div>
+        """, unsafe_allow_html=True
+    )
+
+# --- TAB 3: BASKET & PRICE ---
 with tab3:
-    st.subheader("💰 Price Distribution of Purchases")
-    price_fig = px.histogram(purchases, x="price", nbins=30, title="Price Distribution (Purchased Xiaomi Phones)")
-    st.plotly_chart(price_fig, use_container_width=True)
+    st.subheader("Price Distribution of Purchases")
+    st.markdown("This histogram shows how Xiaomi product prices are distributed among purchases.")
+    fig_price = px.histogram(purchases, x="price", nbins=30, title="Distribution of Purchase Prices",
+                             labels={"price": "Price (USD)", "count": "Frequency"})
+    st.plotly_chart(fig_price, use_container_width=True)
 
     if "basket" in df.columns and df["basket"].notna().sum() > 0:
-        st.subheader("📦 Basket Items (Top 10 Most Common)")
-        basket_items = df["basket"].dropna().str.split(",").explode().str.strip()
-        basket_freq = basket_items.value_counts().head(10).reset_index()
-        basket_freq.columns = ["Item", "Count"]
-        st.dataframe(basket_freq)
+        st.subheader("Most Common Co-Purchased Items")
+        st.markdown("These are the most frequent other items in the basket with Xiaomi phones.")
+        basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
+        top_basket = basket_items.value_counts().head(10).reset_index()
+        top_basket.columns = ["Item", "Frequency"]
+        st.dataframe(top_basket)
 
-# --- TAB 4: FUNNEL ---
-with tab4:
-    st.subheader("🧭 Conversion Funnel")
-    funnel_counts = {
-        "Viewed": total_views,
-        "Purchased": total_purchases
-    }
-    funnel_df = pd.DataFrame(list(funnel_counts.items()), columns=["Stage", "Count"])
-    fig = px.funnel(funnel_df, x="Count", y="Stage", title="Xiaomi Purchase Funnel")
-    st.plotly_chart(fig, use_container_width=True)
-
-# --- FOOTER ---
-st.caption("Data source: Hugging Face · Month: October 2019 · Brand: Xiaomi")
-
+    # --- Insight Box ---
+    st.markdown(
+        """
+        <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
+        🧠 <b>Insight:</b> Xiaomi phones are often bundled with recurring accessories. Highlighting bundle deals could drive higher basket sizes.
+        </div>
+        """, unsafe_allow_html=True
+    )
