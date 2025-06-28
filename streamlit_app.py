@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
-st.title("\U0001F4F1 Xiaomi Phones - October 2019 Dashboard")
+st.title("\U0001F4F1 Xiaomi Phones")
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
@@ -49,7 +49,7 @@ avg_price = purchases["price"].mean()
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
-    "📊 Market Overview", "⏰ Time Analysis", "🛒 Basket & Pricing", "🔮 Predictive Insights"
+    "1️⃣ Market Overview", "2️⃣ Time Analysis", "3️⃣ Basket & Pricing", "4️⃣ Predictive Insights"
 ])
 
 # --- TAB 1: MARKET OVERVIEW ---
@@ -77,10 +77,14 @@ with tab1:
         "Stage": ["Viewed", "Purchased"],
         "Count": [total_views, total_purchases]
     })
-    fig_funnel = px.funnel(funnel_data, x="Count", y="Stage",
-                           color="Stage",
-                           color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
-                           title="\U0001F501 Xiaomi Funnel: Views to Purchases")
+    fig_funnel = px.funnel(
+        funnel_data,
+        y="Stage",
+        x="Count",
+        color="Stage",
+        color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
+        title="🔁 Xiaomi Funnel: Views to Purchases"
+    )
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
@@ -119,6 +123,20 @@ with tab2:
 
 # --- TAB 3: BASKET & PRICING ---
 with tab3:
+    # --- Price Sensitivity: Conversion Rate by Price Band ---
+    st.subheader("📊 Conversion Rate by Price Range")
+    bins = [0, 200, 400, 600, 800, 1000, np.inf]
+    labels = ["<$200", "$200-400", "$400-600", "$600-800", "$800-1000", "$1000+"]
+    df["price_bin"] = pd.cut(df["price"], bins=bins, labels=labels, include_lowest=True)
+
+    conv_data = df[df["event_type"].isin(["view", "purchase"])]
+    summary = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0)
+    summary["conversion_rate"] = summary["purchase"] / summary["view"] * 100
+    summary = summary.reset_index()
+
+    fig_conv = px.bar(summary, x="price_bin", y="conversion_rate", title="💸 Conversion Rate by Price Range",
+                      labels={"conversion_rate": "Conversion Rate (%)", "price_bin": "Price Range"})
+    st.plotly_chart(fig_conv, use_container_width=True)
     fig_price = px.histogram(purchases, x="price", nbins=30,
                              title="\U0001F4B2 Price Distribution of Purchases",
                              labels={"price": "Price (USD)", "count": "Frequency"})
@@ -132,8 +150,15 @@ with tab3:
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
         top_basket["Category"] = top_basket["Item"].apply(lambda x: x.split("_")[0] if "_" in x else "other")
-        fig_basket = px.bar(top_basket, x="Item", y="Frequency", color="Category",
-                            title="Top Basket Items Colored by Category Group")
+        fig_basket = px.bar(
+            top_basket,
+            x="Item",
+            y="Frequency",
+            color="Category",
+            title="Top Basket Items Colored by Category Group",
+            color_discrete_sequence=px.colors.qualitative.Set2
+        )
+        st.dataframe(top_basket)
         st.plotly_chart(fig_basket, use_container_width=True)
 
     st.markdown("""
@@ -164,5 +189,7 @@ with tab4:
         \U0001F9E0 <b>Insight:</b> A simple model using price and time can moderately predict purchase behavior. Integrate with campaigns.
         </div>
     """, unsafe_allow_html=True)
+
+
 
 
