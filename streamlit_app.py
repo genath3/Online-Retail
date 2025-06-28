@@ -2,132 +2,94 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 import plotly.express as px
-import plotly.graph_objects as go
-import matplotlib.pyplot as plt
-import seaborn as sns
-from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
-from sklearn.model_selection import train_test_split
 
-st.set_page_config(page_title="Smartphone Dashboard", layout="wide")
-st.title("Smartphone Sales Dashboard")
+# --- CONFIG ---
+st.set_page_config(page_title="Xiaomi Phone Dashboard", layout="wide")
 
+# --- HEADER ---
+st.title("Xiaomi Phones Dashboard")
+st.markdown("This dashboard provides insights into Xiaomi phone user interactions and sales for the month of October 2019.")
+
+# --- LOAD DATA ---
 @st.cache_data
 def load_data():
-    url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/top10_brands_cleaned.csv.gz?raw=true"
-    df = pd.read_csv(url, compression="gzip")
-    if len(df) > 200_000:
-        df = df.sample(200_000, random_state=42).reset_index(drop=True)
-    df['event_time'] = pd.to_datetime(df['event_time'], errors='coerce')
+    url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/xiaomi_cleaned.csv"
+    df = pd.read_csv(url)
+    df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
+    df["brand"] = df["brand"].astype(str).str.lower()
+    df = df[df["brand"] == "xiaomi"]
     return df
+
 df = load_data()
 
-# Consistent brand colors
-top_brands = df['brand'].unique().tolist()
-palette = px.colors.qualitative.Plotly
-brand_colors = {brand: palette[i % len(palette)] for i, brand in enumerate(top_brands)}
+# --- BASIC CLEANING ---
+df = df.dropna(subset=["event_time", "event_type", "price"])  # price may be NaN for views
+df["date"] = df["event_time"].dt.date
+df["hour"] = df["event_time"].dt.hour
+df["weekday"] = df["event_time"].dt.day_name()
 
-# ------------------ Tabs ------------------
-tab1, tab2, tab3, tab4 = st.tabs(["Overall Market Overview", "Brand Deep Dive", "Time Analysis", "Basket & Segmentation"])
+# --- KPI METRICS ---
+views = df[df["event_type"] == "view"]
+purchases = df[df["event_type"] == "purchase"]
+total_views = len(views)
+total_purchases = len(purchases)
+conversion_rate = (total_purchases / total_views * 100) if total_views else 0
+avg_price = purchases["price"].mean()
 
-# ------------------ Tab 1: KPIs + Purchases ------------------
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("👀 Total Views", f"{total_views:,}")
+col2.metric("🛒 Total Purchases", f"{total_purchases:,}")
+col3.metric("🎯 Conversion Rate", f"{conversion_rate:.1f}%")
+col4.metric("💸 Avg. Purchase Price", f"${avg_price:.2f}")
+
+# --- TABS ---
+tab1, tab2, tab3, tab4 = st.tabs(["📊 Daily Activity", "⏰ Time of Day", "🧺 Basket & Price", "📈 Funnel Analysis"])
+
+# --- TAB 1: DAILY TRENDS ---
 with tab1:
-    st.subheader("Overall KPIs (Full Dataset Summary)")
-    kpis = [
-        ("Total Purchases", 337536),
-        ("Total Views", 10597573),
-        ("Users", 1299719),
-        ("Sessions", 3097183),
-        ("Brands", 41)
-    ]
-    cols = st.columns(len(kpis))
-    for col, (label, value) in zip(cols, kpis):
-        col.markdown(f"""
-        <div style='background-color:#3b82f6;padding:20px;border-radius:15px;text-align:center;'>
-            <h4 style='color:white;margin:0'>{label}</h4>
-            <h2 style='color:white;margin:0'>{value:,}</h2>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown("---")
-    st.subheader("Top 10 Brands by Purchases")
-    st.caption("Total number of purchases made for each of the top 10 smartphone brands.")
-    purchase_counts = df[df['action'] == 'purchase'].groupby('brand').size().sort_values(ascending=False)
-    fig = px.bar(purchase_counts, color=purchase_counts.index,
-                 color_discrete_map=brand_colors,
-                 labels={"value": "Number of Purchases", "index": "Brand"},
-                 title="Total Purchases by Brand")
+    daily_counts = df.groupby(["date", "event_type"]).size().reset_index(name="count")
+    fig = px.line(daily_counts, x="date", y="count", color="event_type", markers=True,
+                  title="📆 Daily Xiaomi Events")
     st.plotly_chart(fig, use_container_width=True)
-    st.markdown("🧠 These charts show that brands like Samsung and Xiaomi dominate total purchases, therefore they should be prioritized in campaign targeting.")
 
-    st.subheader("Views-to-Purchase Ratio by Brand (with Add-To-Cart)")
-    st.caption("The ratio of total interactions (Views + Add-To-Cart) per Purchase.\n\n*Formula: ((Views + Add-To-Cart) / Purchases)")
-    views = df[df['action'] == 'view'].groupby('brand').size()
-    carts = df[df['action'] == 'cart'].groupby('brand').size()
-    purchases = df[df['action'] == 'purchase'].groupby('brand').size()
-    ratio = ((views + carts) / purchases).round(1)
-    ratio_df = pd.DataFrame({"Brand": ratio.index, "Views-to-Purchase Ratio": ratio.values})
-    st.dataframe(ratio_df.style.background_gradient(subset=['Views-to-Purchase Ratio'], cmap='Blues'), use_container_width=True)
-
-    st.markdown("""
-    <div style='background-color:#e0f2fe;padding:15px;border-radius:10px;'>
-    🧠 <strong>These tables show that brands with lower ratios require fewer interactions to convert, therefore are more ad efficient.</strong>
-    </div>
-    """, unsafe_allow_html=True)
-
-# ------------------ Tab 2: Brand Engagement ------------------
+# --- TAB 2: HOURLY HEATMAP ---
 with tab2:
-    st.subheader("Views to Purchase Ratio by Brand")
-    st.caption("Shows how many product views are needed to trigger a purchase per brand. Lower is better.")
-    view_purchase_ratio = ((views + 1) / (purchases + 1)).round(1)
-    ratio_df = pd.DataFrame({"Brand": view_purchase_ratio.index, "View-to-Purchase Ratio": view_purchase_ratio.values})
-    fig2 = px.bar(ratio_df.sort_values("View-to-Purchase Ratio"),
-                  x="Brand", y="View-to-Purchase Ratio", color="Brand",
-                  color_discrete_map=brand_colors,
-                  title="View-to-Purchase Ratio by Brand")
-    fig2.update_traces(width=0.6)
-    st.plotly_chart(fig2, use_container_width=True)
+    heatmap_data = df.groupby(["weekday", "hour", "event_type"]).size().reset_index(name="count")
+    weekdays_order = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    heatmap_data["weekday"] = pd.Categorical(heatmap_data["weekday"], categories=weekdays_order, ordered=True)
 
-    st.markdown("""
-    <div style='background-color:#e0f2fe;padding:15px;border-radius:10px;'>
-    🧠 <strong>This graph shows that some brands convert quickly with fewer views, therefore they may be undervalued in ROI analysis.</strong>
-    </div>
-    """, unsafe_allow_html=True)
+    for etype in heatmap_data["event_type"].unique():
+        st.subheader(f"🔹 Hourly Heatmap - {etype.title()}")
+        subset = heatmap_data[heatmap_data["event_type"] == etype]
+        heatmap = subset.pivot_table(index="weekday", columns="hour", values="count", fill_value=0)
+        fig = px.imshow(heatmap, text_auto=True, aspect="auto", color_continuous_scale="Blues",
+                        labels={"color": "Count"}, title=f"Heatmap of {etype.title()} Events by Hour & Weekday")
+        st.plotly_chart(fig, use_container_width=True)
 
-# ------------------ Tab 3: Time Analysis ------------------
+# --- TAB 3: PRICE & BASKET ---
 with tab3:
-    st.subheader("Sessions by Hour and Day")
-    st.caption("This heatmap highlights peak user activity across hours and weekdays.")
-    df['hour'] = df['timestamp'].dt.hour
-    df['weekday'] = pd.Categorical(df['timestamp'].dt.day_name(),
-                                   categories=["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
-                                   ordered=True)
-    heatmap_data = df.pivot_table(index="weekday", columns="hour", values="session_id", aggfunc="count").fillna(0)
-    fig3 = px.imshow(heatmap_data,
-                     labels=dict(x="Hour", y="Day", color="Sessions"),
-                     color_continuous_scale="Blues",
-                     title="Session Frequency by Hour and Day")
-    st.plotly_chart(fig3, use_container_width=True)
+    st.subheader("💰 Price Distribution of Purchases")
+    price_fig = px.histogram(purchases, x="price", nbins=30, title="Price Distribution (Purchased Xiaomi Phones)")
+    st.plotly_chart(price_fig, use_container_width=True)
 
-    st.markdown("""
-    <div style='background-color:#e0f2fe;padding:15px;border-radius:10px;'>
-    🧠 <strong>This heatmap shows user peaks before midday and after 6pm, therefore ad timing should target those hours for highest visibility.</strong>
-    </div>
-    """, unsafe_allow_html=True)
+    if "basket" in df.columns and df["basket"].notna().sum() > 0:
+        st.subheader("📦 Basket Items (Top 10 Most Common)")
+        basket_items = df["basket"].dropna().str.split(",").explode().str.strip()
+        basket_freq = basket_items.value_counts().head(10).reset_index()
+        basket_freq.columns = ["Item", "Count"]
+        st.dataframe(basket_freq)
 
-# ------------------ Tab 4: Basket & Segmentation ------------------
+# --- TAB 4: FUNNEL ---
 with tab4:
-    st.subheader("Market Basket Relationships")
-    st.caption("The most common product combinations appearing in baskets during purchases.")
+    st.subheader("🧭 Conversion Funnel")
+    funnel_counts = {
+        "Viewed": total_views,
+        "Purchased": total_purchases
+    }
+    funnel_df = pd.DataFrame(list(funnel_counts.items()), columns=["Stage", "Count"])
+    fig = px.funnel(funnel_df, x="Count", y="Stage", title="Xiaomi Purchase Funnel")
+    st.plotly_chart(fig, use_container_width=True)
 
-    basket_df = df[df["basket"].notna()].copy()
-    top_baskets = basket_df["basket"].value_counts().head(10).reset_index()
-    top_baskets.columns = ["Basket", "Frequency"]
-    st.dataframe(top_baskets.style.background_gradient(subset=["Frequency"], cmap="Blues"), use_container_width=True)
+# --- FOOTER ---
+st.caption("Data source: Hugging Face · Month: October 2019 · Brand: Xiaomi")
 
-    st.markdown("""
-    <div style='background-color:#e0f2fe;padding:15px;border-radius:10px;'>
-    🧠 <strong>These tables show recurring product pairings, therefore they can inform bundling and cross-sell promotion strategies.</strong>
-    </div>
-    """, unsafe_allow_html=True)
