@@ -15,11 +15,9 @@ st.title("\U0001F4F1 Xiaomi Phones - October 2019 Dashboard")
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
-@st.cache_data
 from huggingface_hub import hf_hub_download
 
 @st.cache_data
-from huggingface_hub import hf_hub_download
 
 def load_data():
     file_path = hf_hub_download(
