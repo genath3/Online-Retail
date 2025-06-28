@@ -28,6 +28,12 @@ df["date"] = df["event_time"].dt.date
 df["hour"] = df["event_time"].dt.hour
 df["weekday"] = df["event_time"].dt.day_name()
 
+df = load_data()
+df = df.dropna(subset=["event_time", "event_type", "price"])
+df["date"] = df["event_time"].dt.date
+df["hour"] = df["event_time"].dt.hour
+df["weekday"] = df["event_time"].dt.day_name()
+
 # --- METRICS ---
 views = df[df["event_type"] == "view"]
 purchases = df[df["event_type"] == "purchase"]
