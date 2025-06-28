@@ -61,6 +61,16 @@ with tab1:
     col4.metric("\U0001F4B8 Avg. Price", f"${avg_price:.2f}")
 
     daily_counts = df.groupby(["date", "event_type"]).size().reset_index(name="count")
+    chart_type = st.radio("Select chart type:", ["Absolute", "Percentage"], horizontal=True)
+
+    if chart_type == "Percentage":
+        pivot = daily_counts.pivot(index="date", columns="event_type", values="count").fillna(0)
+        pivot_pct = pivot.div(pivot.sum(axis=1), axis=0) * 100
+        daily_counts = pivot_pct.reset_index().melt(id_vars="date", var_name="event_type", value_name="count")
+        yaxis_label = "Percentage of Events"
+    else:
+        yaxis_label = "Event Count"
+
     fig_bar = px.bar(
         daily_counts,
         x="date",
@@ -69,10 +79,9 @@ with tab1:
         color_discrete_map={"view": "#636EFA", "purchase": "#EF553B"},
         text="count",
         barmode="stack",
-        labels={"date": "Date", "count": "Event Count", "event_type": "Event Type"},
+        labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
         category_orders={"event_type": ["purchase", "view"]},
-        textangle=0,
-        title="📅 Daily Interaction Volume"
+        title="Daily Event Volume"
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
@@ -210,7 +219,6 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
-
 
 
 
