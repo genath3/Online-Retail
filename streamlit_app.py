@@ -11,7 +11,19 @@ from sklearn.cluster import KMeans
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
-st.title("\U0001F4F1 Xiaomi Phones")
+
+# Xiaomi styling
+XIAOMI_ORANGE = "#ff6900"
+XIAOMI_BLACK = "#000000"
+XIAOMI_WHITE = "#ffffff"
+
+# Xiaomi logo and banner styling
+st.markdown("""
+    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Xiaomi_logo.svg/512px-Xiaomi_logo.svg.png" width="60">
+        <h1 style="color: #ff6900; margin: 0;">Xiaomi Phones - October 2019 Dashboard</h1>
+    </div>
+""", unsafe_allow_html=True)
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
@@ -87,7 +99,7 @@ with tab1:
         category_orders={"event_type": ["View", "Purchase"]},
         text_auto=True,
         title="Daily Event Volume"
-    )
+    ).update_traces(insidetextfont=dict(size=14))
     st.plotly_chart(fig_bar, use_container_width=True)
 
     funnel_data = pd.DataFrame({
@@ -100,8 +112,9 @@ with tab1:
         values="Count",
         color="Stage",
         color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
-        title="🔁 Xiaomi Funnel: Views to Purchases"
-    )
+        title="🔁 Xiaomi Funnel: Views to Purchases",
+        hole=0.3
+    ).update_traces(textinfo='percent+value')
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
@@ -140,17 +153,17 @@ with tab2:
 
 # --- TAB 3: BASKET & PRICING ---
 with tab3:
-    st.subheader("💰 Price Distribution")
+    st.markdown("### 💰 Price Distribution")
     fig_price = px.histogram(purchases, x="price", nbins=30,
                              title="Price Distribution of Purchases",
                              labels={"price": "Price (USD)", "count": "Frequency"})
     st.plotly_chart(fig_price, use_container_width=True)
 
-    st.subheader("📦 Price Range (Box Plot)")
+    st.markdown("### 📦 Price Range (Box Plot)")
     box_fig = px.box(purchases, y="price", title="Price Range (Box Plot)")
     st.plotly_chart(box_fig, use_container_width=True)
 
-    st.subheader("🧮 Views by Price Range")
+    st.markdown("### 🧮 Views by Price Range")
     bins = [0, 200, 400, 600, 800, 1000, np.inf]
     labels = ["<$200", "$200–400", "$400–600", "$600–800", "$800–1000", "$1000+"]
     df["price_bin"] = pd.cut(df["price"], bins=bins, labels=labels, include_lowest=True)
@@ -162,12 +175,10 @@ with tab3:
                  title="Views by Price Range")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("🛍️ Top Basket Items")
+    st.markdown("### 🛍️ Top Basket Items")
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
-        top_basket.columns = ["Item", "Frequency"]
-        top_basket["Category"] = top_basket["Item"].apply(lambda x: x.split("_")[0] if "_" in x else "other")
         top_basket["Frequency"] = top_basket["Frequency"].round(0).astype(int)
         st.dataframe(top_basket)
 
@@ -208,10 +219,6 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
-
-
-
-
 
 
 
