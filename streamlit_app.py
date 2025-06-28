@@ -86,7 +86,6 @@ with tab1:
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
         category_orders={"event_type": ["View", "Purchase"]},
         text_auto=True,
-        category_orders={"event_type": ["purchase", "view"]},
         title="Daily Event Volume"
     )
     st.plotly_chart(fig_bar, use_container_width=True)
@@ -189,7 +188,6 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
-
 
 
 
