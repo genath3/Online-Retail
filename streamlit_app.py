@@ -20,7 +20,7 @@ def load_data():
     import requests
     from io import StringIO
 
-    url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/xiaomi_cleaned.csv"
+    url = "https://huggingface.co/datasets/7ng10dpE/resolve/main/Online-Retail/xiaomi_cleaned.csv"
     headers = {"Authorization": f"Bearer {st.secrets['huggingface']['token']}"}
 
     response = requests.get(url, headers=headers)
@@ -39,6 +39,7 @@ def load_data():
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
     return df
+
 
 
 df = load_data()
