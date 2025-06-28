@@ -70,7 +70,8 @@ with tab1:
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": "Event Count", "event_type": "Event Type"},
-        category_orders={"event_type": ["view", "purchase"]},
+        category_orders={"event_type": ["purchase", "view"]},
+        textangle=0,
         title="📅 Daily Interaction Volume"
     )
     st.plotly_chart(fig_bar, use_container_width=True)
@@ -79,8 +80,7 @@ with tab1:
         "Stage": ["Viewed", "Purchased"],
         "Count": [total_views, total_purchases]
     })
-    fig_funnel = px.funnel(
-        funnel_data[::-1],
+    fig_funnel = px.funnel_area(
         y="Stage",
         x="Count",
         color="Stage",
@@ -125,20 +125,39 @@ with tab2:
 
 # --- TAB 3: BASKET & PRICING ---
 with tab3:
-    # --- Price Sensitivity: Conversion Rate by Price Band ---
-    st.subheader("📊 Conversion Rate by Price Range")
+    fig_price = px.histogram(purchases, x="price", nbins=30,
+                             title="💰 Price Distribution of Purchases",
+                             labels={"price": "Price (USD)", "count": "Frequency"})
+    st.plotly_chart(fig_price, use_container_width=True)
+
+    box_fig = px.box(purchases, y="price", title="📦 Price Range (Box Plot)")
+    st.plotly_chart(box_fig, use_container_width=True)
+
+    st.subheader("📊 Price Sensitivity Analysis")
+
     bins = [0, 200, 400, 600, 800, 1000, np.inf]
-    labels = ["<$200", "$200-400", "$400-600", "$600-800", "$800-1000", "$1000+"]
+    labels = ["<$200", "$200–400", "$400–600", "$600–800", "$800–1000", "$1000+"]
     df["price_bin"] = pd.cut(df["price"], bins=bins, labels=labels, include_lowest=True)
 
     conv_data = df[df["event_type"].isin(["view", "purchase"])]
-    summary = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0)
-    summary["conversion_rate"] = summary["purchase"] / summary["view"] * 100
-    summary = summary.reset_index()
+    grouped = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0).reset_index()
+    grouped["conversion_rate"] = (grouped["purchase"] / grouped["view"]) * 100
 
-    fig_conv = px.bar(summary, x="price_bin", y="conversion_rate", title="💸 Conversion Rate by Price Range",
-                      labels={"conversion_rate": "Conversion Rate (%)", "price_bin": "Price Range"})
-    st.plotly_chart(fig_conv, use_container_width=True)
+    fig = px.bar(grouped, x="price_bin", y="view", text="view",
+                 labels={"view": "Views", "price_bin": "Price Range"},
+                 title="Views and Conversion Rate by Price Range")
+
+    fig.add_scatter(x=grouped["price_bin"], y=grouped["conversion_rate"],
+                    mode="lines+markers", name="Conversion Rate (%)",
+                    yaxis="y2")
+
+    fig.update_layout(
+        yaxis=dict(title="Views"),
+        yaxis2=dict(title="Conversion Rate (%)", overlaying="y", side="right"),
+        legend=dict(x=0.5, xanchor="center", orientation="h")
+    )
+
+    st.plotly_chart(fig, use_container_width=True)
     fig_price = px.histogram(purchases, x="price", nbins=30,
                              title="\U0001F4B2 Price Distribution of Purchases",
                              labels={"price": "Price (USD)", "count": "Frequency"})
@@ -161,25 +180,34 @@ with tab3:
     """, unsafe_allow_html=True)
 
 # --- TAB 4: PREDICTIVE INSIGHTS ---
-with tab4:
-    st.subheader("Purchase Prediction (View vs. Purchase)")
+@st.cache_resource
+def get_model():
     clf_df = df[df["event_type"].isin(["view", "purchase"])].copy()
     clf_df["label"] = (clf_df["event_type"] == "purchase").astype(int)
-
     X = clf_df[["price", "hour"]].fillna(0)
     y = clf_df["label"]
-
-    X_train, X_test, y_train, y_test = train_test_split(X, y, stratify=y, test_size=0.2, random_state=42)
     model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X_train, y_train)
-    y_pred = model.predict(X_test)
+    model.fit(X, y)
+    return model
 
-    report = classification_report(y_test, y_pred, output_dict=False)
-    st.text(report)
+with tab4:
+    st.subheader("🎯 Purchase Probability Simulator")
+    model = get_model()
+
+    col1, col2 = st.columns(2)
+    with col1:
+        price_input = st.slider("Select product price (USD):", 0, 1000, 500, step=10)
+    with col2:
+        hour_input = st.slider("Select hour of day (0–23):", 0, 23, 14)
+
+    input_df = pd.DataFrame({"price": [price_input], "hour": [hour_input]})
+    prob = model.predict_proba(input_df)[0][1] * 100
+
+    st.metric(label="Estimated Purchase Probability", value=f"{prob:.1f}%")
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        \U0001F9E0 <b>Insight:</b> A simple model using price and time can moderately predict purchase behavior. Integrate with campaigns.
+        🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
 
