@@ -22,7 +22,7 @@ from huggingface_hub import hf_hub_download
 def load_data():
     file_path = hf_hub_download(
         repo_id="7ng10dpE/Online-Retail",
-        filename="xiaomi_cleaned.csv",
+        filename="Online-Retail/xiaomi_cleaned.csv",
         token=st.secrets["huggingface"]["token"]
     )
     df = pd.read_csv(file_path)
