@@ -61,6 +61,10 @@ with tab1:
     col4.metric("\U0001F4B8 Avg. Price", f"${avg_price:.2f}")
 
     daily_counts = df.groupby(["date", "event_type"]).size().reset_index(name="count")
+    daily_counts = daily_counts[daily_counts["event_type"].isin(["view", "purchase"])]
+    daily_counts["count"] = daily_counts["count"].round(0).astype(int)
+
+    
     chart_type = st.radio("Select chart type:", ["Absolute", "Percentage"], horizontal=True)
 
     if chart_type == "Percentage":
@@ -80,6 +84,8 @@ with tab1:
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
+        category_orders={"event_type": ["View", "Purchase"]},
+        text_auto=True,
         category_orders={"event_type": ["purchase", "view"]},
         title="Daily Event Volume"
     )
@@ -89,11 +95,12 @@ with tab1:
         "Stage": ["Viewed", "Purchased"],
         "Count": [total_views, total_purchases]
     })
-    fig_funnel = px.funnel_area(
-        data_frame=funnel_data,
-        names="Stage",
-        values="Count",
+    fig_funnel = px.bar(
+        funnel_data,
+        x="Stage",
+        y="Count",
         color="Stage",
+        text="Count",
         color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
         title="🔁 Xiaomi Funnel: Views to Purchases"
     )
@@ -135,52 +142,14 @@ with tab2:
 
 # --- TAB 3: BASKET & PRICING ---
 with tab3:
-    fig_price = px.histogram(purchases, x="price", nbins=30,
-                             title="💰 Price Distribution of Purchases",
-                             labels={"price": "Price (USD)", "count": "Frequency"})
-    st.plotly_chart(fig_price, use_container_width=True)
-
-    box_fig = px.box(purchases, y="price", title="📦 Price Range (Box Plot)")
-    st.plotly_chart(box_fig, use_container_width=True)
-
-    st.subheader("📊 Price Sensitivity Analysis")
-
-    bins = [0, 200, 400, 600, 800, 1000, np.inf]
-    labels = ["<$200", "$200–400", "$400–600", "$600–800", "$800–1000", "$1000+"]
-    df["price_bin"] = pd.cut(df["price"], bins=bins, labels=labels, include_lowest=True)
-
-    conv_data = df[df["event_type"].isin(["view", "purchase"])]
-    grouped = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0).reset_index()
-    grouped["conversion_rate"] = (grouped["purchase"] / grouped["view"]) * 100
-
-    fig = px.bar(grouped, x="price_bin", y="view", text="view",
-                 labels={"view": "Views", "price_bin": "Price Range"},
-                 title="Views and Conversion Rate by Price Range")
-
-    fig.add_scatter(x=grouped["price_bin"], y=grouped["conversion_rate"],
-                    mode="lines+markers", name="Conversion Rate (%)",
-                    yaxis="y2")
-
-    fig.update_layout(
-        yaxis=dict(title="Views"),
-        yaxis2=dict(title="Conversion Rate (%)", overlaying="y", side="right"),
-        legend=dict(x=0.5, xanchor="center", orientation="h")
-    )
-
-    st.plotly_chart(fig, use_container_width=True)
-    fig_price = px.histogram(purchases, x="price", nbins=30,
-                             title="\U0001F4B2 Price Distribution of Purchases",
-                             labels={"price": "Price (USD)", "count": "Frequency"})
-    st.plotly_chart(fig_price, use_container_width=True)
-
-    box_fig = px.box(purchases, y="price", title="Price Range (Box Plot)")
-    st.plotly_chart(box_fig, use_container_width=True)
+    
 
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
         top_basket["Category"] = top_basket["Item"].apply(lambda x: x.split("_")[0] if "_" in x else "other")
+        top_basket["Frequency"] = top_basket["Frequency"].round(0).astype(int)
         st.dataframe(top_basket)
 
     st.markdown("""
@@ -213,13 +182,14 @@ with tab4:
     input_df = pd.DataFrame({"price": [price_input], "hour": [hour_input]})
     prob = model.predict_proba(input_df)[0][1] * 100
 
-    st.metric(label="Estimated Purchase Probability", value=f"{prob:.1f}%")
+    st.metric(label="Estimated Purchase Probability", value=f"{prob:.0f}%")
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
