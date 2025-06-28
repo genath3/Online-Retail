@@ -17,6 +17,8 @@ st.title("Smartphone Sales Dashboard")
 def load_data():
     url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/top10_brands_cleaned.csv.gz?raw=true"
     df = pd.read_csv(url, compression="gzip")
+    if len(df) > 200_000:
+        df = df.sample(200_000, random_state=42).reset_index(drop=True)
     df['event_time'] = pd.to_datetime(df['event_time'], errors='coerce')
     return df
 df = load_data()
