@@ -20,17 +20,18 @@ from huggingface_hub import hf_hub_download
 @st.cache_data
 
 def load_data():
-      file_path = hf_hub_download(
-        repo_id="7ng10dpE/Online-Retail", 
-        filename="xiaomi_cleaned.csv",     
+    from huggingface_hub import hf_hub_download
+    file_path = hf_hub_download(
+        repo_id="7ng10dpE",
+        filename="Online-Retail/xiaomi_cleaned.csv",
         token=st.secrets["huggingface"]["token"]
     )
-
     df = pd.read_csv(file_path)
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
-    return df
+    return df      
+      
 
 df = load_data()
 df = df.dropna(subset=["event_time", "event_type", "price"])
