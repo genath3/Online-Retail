@@ -162,7 +162,8 @@ with tab3:
                  title="Views by Price Range")
     st.plotly_chart(fig, use_container_width=True)
 
-    st.subheader("🛍️ Top Basket Items")    if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
+    st.subheader("🛍️ Top Basket Items")
+    if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
@@ -207,6 +208,7 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
