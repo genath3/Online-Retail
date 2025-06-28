@@ -21,7 +21,7 @@ from huggingface_hub import hf_hub_download
 
 def load_data():
     file_path = hf_hub_download(
-        repo_id="7ng10dpE/Online-Retail",
+        repo_id="7ng10dpE",
         filename="Online-Retail/xiaomi_cleaned.csv",
         token=st.secrets["huggingface"]["token"]
     )
@@ -30,9 +30,6 @@ def load_data():
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
     return df
-
-
-
 
 df = load_data()
 df = df.dropna(subset=["event_time", "event_type", "price"])
@@ -178,6 +175,9 @@ with tab5:
         \U0001F9E0 <b>Insight:</b> A simple model using price and time can moderately predict purchase behavior. Integrate with campaigns.
         </div>
     """, unsafe_allow_html=True)
+
+
+
 
 
 
