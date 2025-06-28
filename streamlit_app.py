@@ -16,14 +16,9 @@ st.title("Smartphone Sales Dashboard")
 @st.cache_data
 def load_data():
     url = "https://huggingface.co/datasets/7ng10dpE/Online-Retail/resolve/main/top10_brands_cleaned.csv.gz?raw=true"
-    try:
-        df = pd.read_csv(url, compression="gzip")
-        df['event_time'] = pd.to_datetime(df['event_time'], errors='coerce')
-        return df
-    except Exception as e:
-        st.error(f"❌ Failed to load dataset: {e}")
-        return pd.DataFrame()
-
+    df = pd.read_csv(url, compression="gzip")
+    df['event_time'] = pd.to_datetime(df['event_time'], errors='coerce')
+    return df
 df = load_data()
 
 # Consistent brand colors
