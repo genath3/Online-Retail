@@ -67,8 +67,10 @@ with tab1:
         y="count",
         color="event_type",
         color_discrete_map={"view": "#636EFA", "purchase": "#EF553B"},
+        text="count", "purchase": "#EF553B"},
         barmode="stack",
         labels={"date": "Date", "count": "Event Count", "event_type": "Event Type"},
+        category_orders={"event_type": ["view", "purchase"]},
         title="📅 Daily Interaction Volume"
     )
     st.plotly_chart(fig_bar, use_container_width=True)
@@ -78,7 +80,7 @@ with tab1:
         "Count": [total_views, total_purchases]
     })
     fig_funnel = px.funnel(
-        funnel_data,
+        funnel_data[::-1],
         y="Stage",
         x="Count",
         color="Stage",
@@ -150,14 +152,7 @@ with tab3:
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
         top_basket["Category"] = top_basket["Item"].apply(lambda x: x.split("_")[0] if "_" in x else "other")
-        fig_basket = px.bar(
-            top_basket,
-            x="Item",
-            y="Frequency",
-            color="Category",
-            title="Top Basket Items Colored by Category Group",
-            color_discrete_sequence=px.colors.qualitative.Set2
-        )
+        fig_basket = None  # chart removed per request
         st.dataframe(top_basket)
         st.plotly_chart(fig_basket, use_container_width=True)
 
@@ -189,6 +184,7 @@ with tab4:
         \U0001F9E0 <b>Insight:</b> A simple model using price and time can moderately predict purchase behavior. Integrate with campaigns.
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
