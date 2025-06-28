@@ -67,7 +67,7 @@ with tab1:
         y="count",
         color="event_type",
         color_discrete_map={"view": "#636EFA", "purchase": "#EF553B"},
-        text="count", "purchase": "#EF553B"},
+        text="count",
         barmode="stack",
         labels={"date": "Date", "count": "Event Count", "event_type": "Event Type"},
         category_orders={"event_type": ["view", "purchase"]},
@@ -152,9 +152,7 @@ with tab3:
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
         top_basket["Category"] = top_basket["Item"].apply(lambda x: x.split("_")[0] if "_" in x else "other")
-        fig_basket = None  # chart removed per request
         st.dataframe(top_basket)
-        st.plotly_chart(fig_basket, use_container_width=True)
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
@@ -184,6 +182,9 @@ with tab4:
         \U0001F9E0 <b>Insight:</b> A simple model using price and time can moderately predict purchase behavior. Integrate with campaigns.
         </div>
     """, unsafe_allow_html=True)
+
+
+
 
 
 
