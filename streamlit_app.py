@@ -90,8 +90,9 @@ with tab1:
         "Count": [total_views, total_purchases]
     })
     fig_funnel = px.funnel_area(
-        y="Stage",
-        x="Count",
+        data_frame=funnel_data,
+        names="Stage",
+        values="Count",
         color="Stage",
         color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
         title="🔁 Xiaomi Funnel: Views to Purchases"
@@ -219,8 +220,6 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
-
-
 
 
 
