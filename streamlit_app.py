@@ -33,13 +33,19 @@ tab1, tab2, tab3, tab4 = st.tabs(["Overview", "Time Analysis", "Brand ROI Model"
 with tab1:
     st.header("🟦 Overview")
 
-    # KPIs
+    # KPIs with consistent layout
+    total_views = int(df[df['event_type'] == 'view'].shape[0])
+    total_purchases = int(df[df['event_type'] == 'purchase'].shape[0])
+    total_users = int(df['user_id'].nunique())
+    total_brands = int(df['brand'].nunique())
+    total_rows = int(df.shape[0])
+
     kpi_data = [
-        ("Total Views", df[df['event_type'] == 'view'].shape[0], "#009688"),
-        ("Total Purchases", df[df['event_type'] == 'purchase'].shape[0], "#00BCD4"),
-        ("Sessions", 3_097_183, "#FF9800"),
-        ("Users", df['user_id'].nunique(), "#F44336"),
-        ("Brands", df['brand'].nunique(), "#3F51B5")
+        ("Total Views", total_views, "#3F51B5"),
+        ("Total Purchases", total_purchases, "#3F51B5"),
+        ("Users", total_users, "#3F51B5"),
+        ("Brands", total_brands, "#3F51B5"),
+        ("Events Logged", total_rows, "#3F51B5")
     ]
     cols = st.columns(len(kpi_data))
     for col, (label, value, color) in zip(cols, kpi_data):
@@ -47,21 +53,24 @@ with tab1:
             <div style='background-color: {color}; padding: 20px; border-radius: 10px;
             text-align: center; color: white; height: 110px; min-height: 110px'>
                 <h5 style='margin: 0;'>{label}</h5>
-                <p style='font-size: 24px; line-height: 1.5; margin: 0;'><b>{int(value):,}</b></p>
+                <p style='font-size: 24px; line-height: 1.5; margin: 0;'><b>{value:,}</b></p>
             </div>
         """, unsafe_allow_html=True)
 
-    # Top brands by purchases
+    # Top brands by purchase
     st.subheader("Top 10 Brands by Purchases")
-    top10 = df[df['event_type'] == 'purchase']['brand'].value_counts().nlargest(10)
-    fig1 = px.bar(top10, x=top10.index, y=top10.values, color=top10.index,
+    st.caption("Total number of purchases per brand, based on event logs.")
+    top_brands = df[df['event_type'] == 'purchase']['brand'].value_counts().nlargest(10)
+    fig1 = px.bar(top_brands, x=top_brands.index, y=top_brands.values, color=top_brands.index,
                   labels={"x": "Brand", "y": "Number of Purchases"},
                   color_discrete_map=brand_colors)
     fig1.update_traces(width=0.6)
     st.plotly_chart(fig1, use_container_width=True)
+    st.markdown("🧠 These charts show that Samsung and Xiaomi dominate purchases — consider prioritizing ad spend on high-volume brands.")
 
     # Conversion rate
     st.subheader("Top 10 Brands by Conversion Rate")
+    st.caption("Percentage of views that result in a purchase, per brand.")
     views = df[df['event_type'] == 'view'].groupby('brand').size()
     purchases = df[df['event_type'] == 'purchase'].groupby('brand').size()
     conversion = (purchases / views).dropna().sort_values(ascending=False).head(10).round(3)
@@ -70,9 +79,11 @@ with tab1:
                   color_discrete_map=brand_colors)
     fig2.update_traces(width=0.6)
     st.plotly_chart(fig2, use_container_width=True)
+    st.markdown("🧠 These brands convert a high % of views to purchases — support them with targeted promotions.")
 
     # Average basket size
     st.subheader("Top 10 Brands by Average Basket Size")
+    st.caption("The average number of items in baskets containing each brand.")
     if 'basket' in df.columns:
         basket_avg = df.dropna(subset=['basket']).groupby('brand')['basket'].apply(
             lambda b: np.mean([len(eval(i)) if isinstance(i, str) else len(i) for i in b])
@@ -83,9 +94,11 @@ with tab1:
                       color_discrete_map=brand_colors)
         fig3.update_traces(width=0.6)
         st.plotly_chart(fig3, use_container_width=True)
+        st.markdown("🧠 These brands are frequently bought in larger baskets — consider bundling or upselling.")
 
-    # Basket item table
+    # Basket item frequency table
     st.subheader("Top Basket Items by Frequency")
+    st.caption("Most commonly co-purchased product types across all baskets.")
     if 'basket' in df.columns:
         all_items = df['basket'].dropna().explode()
         if isinstance(all_items.iloc[0], str):
@@ -95,28 +108,16 @@ with tab1:
         item_counts.columns = ['Product Type', 'Count']
         item_counts['Count'] = item_counts['Count'].astype(int)
         st.dataframe(
-            item_counts.style.background_gradient(subset=['Count'], cmap='Oranges')
+            item_counts.style.background_gradient(subset=['Count'], cmap='Blues')
             .format({'Count': '{:,}'})
             .set_properties(subset=['Product Type'], **{'text-align': 'left'}),
             use_container_width=True
         )
-    else:
-        st.warning("No basket column found in dataset.")
+        st.markdown("🧠 These items are basket staples — promote them alongside smartphones.")
 
-    # Views-to-purchase ratio
-    st.subheader("Views-To-Purchase Ratio Table")
-    eng = df.groupby('brand')['event_type'].value_counts().unstack().fillna(0)
-    eng['Views'] = eng.get('view', 0)
-    eng['Add to Cart'] = eng.get('cart', 0)
-    eng['Purchases'] = eng.get('purchase', 0)
-    eng['Views-To-Purchase Ratio*'] = ((eng['Views'] + eng['Add to Cart']) / eng['Purchases']).replace([np.inf, -np.inf], np.nan).round(1)
-    eng_table = eng[['Views', 'Add to Cart', 'Purchases', 'Views-To-Purchase Ratio*']].sort_values("Views-To-Purchase Ratio*", ascending=False)
-    st.dataframe(eng_table, use_container_width=True)
-    st.markdown("<p style='text-align: right;'>* (Views + Add to Cart) ÷ Purchases</p>", unsafe_allow_html=True)
+# -------------------- Tab 2 --------------------
 
-    st.info("**Key Insights:**\n\n- High-basket brands like Samsung and Xiaomi stand out.\n- Some brands receive many views but low purchases — watch ROI.\n- Top co-purchased items suggest upsell bundles.")
-
-# Preprocessing required for time analysis
+# Ensure hour/weekday columns exist
 df['hour'] = df['event_time'].dt.hour
 df['weekday'] = pd.Categorical(
     df['event_time'].dt.day_name(),
@@ -124,56 +125,52 @@ df['weekday'] = pd.Categorical(
     ordered=True
 )
 
-# -------------------- Tab 2 --------------------
 with tab2:
     st.header("🟧 Time Analysis")
 
-    st.subheader("Products Viewed (Heatmap)")
+    # Views heatmap
+    st.subheader("Product Views by Hour and Day")
     view_matrix = df[df['event_type'] == 'view'].groupby(['weekday', 'hour']).size().unstack().fillna(0)
+    view_matrix = view_matrix.reindex(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
     fig_view = go.Figure(data=go.Heatmap(
         z=view_matrix.values,
-        x=view_matrix.columns,
+        x=list(range(24)),  # full 24-hour range
         y=view_matrix.index,
         colorscale='Blues',
         colorbar=dict(title="Views")
     ))
-    fig_view.update_layout(
-        xaxis_title="Hour of Day",
-        yaxis_title="Weekday",
-        title="Heatmap of Views by Hour and Day"
-    )
+    fig_view.update_layout(title="Heatmap of Views (Hourly × Day)", xaxis_title="Hour", yaxis_title="Weekday")
     st.plotly_chart(fig_view, use_container_width=True)
+    st.markdown("🧠 Views increase after lunch — try posting organic content during peak discovery hours.")
 
-    st.subheader("Products Purchased (Heatmap)")
+    # Purchases heatmap
+    st.subheader("Product Purchases by Hour and Day")
     purchase_matrix = df[df['event_type'] == 'purchase'].groupby(['weekday', 'hour']).size().unstack().fillna(0)
+    purchase_matrix = purchase_matrix.reindex(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"])
     fig_purch = go.Figure(data=go.Heatmap(
         z=purchase_matrix.values,
-        x=purchase_matrix.columns,
+        x=list(range(24)),
         y=purchase_matrix.index,
         colorscale='Greens',
         colorbar=dict(title="Purchases")
     ))
-    fig_purch.update_layout(
-        xaxis_title="Hour of Day",
-        yaxis_title="Weekday",
-        title="Heatmap of Purchases by Hour and Day"
-    )
+    fig_purch.update_layout(title="Heatmap of Purchases (Hourly × Day)", xaxis_title="Hour", yaxis_title="Weekday")
     st.plotly_chart(fig_purch, use_container_width=True)
+    st.markdown("🧠 Most purchases happen mid-morning — try running paid campaigns before 12pm.")
 
-    st.subheader("Conversion Rate by Hour")
+    # Conversion rate line chart
+    st.subheader("Hourly Conversion Rate")
     hourly_views = df[df['event_type'] == 'view'].groupby('hour').size()
     hourly_purchases = df[df['event_type'] == 'purchase'].groupby('hour').size()
     conversion_rate = (hourly_purchases / hourly_views).dropna().round(3)
-    fig_conv = px.line(
-        x=conversion_rate.index,
-        y=conversion_rate.values,
-        labels={'x': 'Hour of Day', 'y': 'Conversion Rate'},
-        title="Conversion Rate by Hour"
-    )
+    fig_conv = px.line(x=conversion_rate.index, y=conversion_rate.values,
+                       labels={'x': 'Hour of Day', 'y': 'Conversion Rate'},
+                       title='Hourly Conversion Rate Across All Users')
+    fig_conv.update_xaxes(range=[0, 23], dtick=1)
     st.plotly_chart(fig_conv, use_container_width=True)
+    st.markdown("🧠 Conversion spikes around 9–11am — optimize ad timing for high-impact hours.")
 
-    st.info("**Key Insights:**\n\n- Viewing spikes occur in the afternoon.\n- Purchases peak mid-morning, especially Wednesdays.\n- Consider scheduling promotional content between 9AM and 12PM.")
-
+   
 # -------------------- Tab 3 --------------------
 with tab3:
     st.header("🟩 Brand ROI Model")
