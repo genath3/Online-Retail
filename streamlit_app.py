@@ -17,15 +17,17 @@ st.markdown("This dashboard provides insights into Xiaomi phone interactions, sa
 @st.cache_data
 def load_data():
     file_path = hf_hub_download(
-        repo_id="genath3/Xiaomi",
-        filename="xiaomi_cleaned.csv",
-        token=st.secrets["huggingface"]["token"]
+    repo_id="genath3/Xiaomi",         # exact user/repo name
+    filename="xiaomi_cleaned.csv",    # just the file name
+    token=st.secrets["huggingface"]["token"]
     )
     df = pd.read_csv(file_path)
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
     return df
+
+
 
 df = load_data()
 df = df.dropna(subset=["event_time", "event_type", "price"])
