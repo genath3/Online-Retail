@@ -94,12 +94,11 @@ with tab1:
         "Stage": ["Viewed", "Purchased"],
         "Count": [total_views, total_purchases]
     })
-    fig_funnel = px.bar(
+    fig_funnel = px.pie(
         funnel_data,
-        x="Stage",
-        y="Count",
+        names="Stage",
+        values="Count",
         color="Stage",
-        text="Count",
         color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
         title="🔁 Xiaomi Funnel: Views to Purchases"
     )
@@ -141,9 +140,29 @@ with tab2:
 
 # --- TAB 3: BASKET & PRICING ---
 with tab3:
-    
+    st.subheader("💰 Price Distribution")
+    fig_price = px.histogram(purchases, x="price", nbins=30,
+                             title="Price Distribution of Purchases",
+                             labels={"price": "Price (USD)", "count": "Frequency"})
+    st.plotly_chart(fig_price, use_container_width=True)
 
-    if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
+    st.subheader("📦 Price Range (Box Plot)")
+    box_fig = px.box(purchases, y="price", title="Price Range (Box Plot)")
+    st.plotly_chart(box_fig, use_container_width=True)
+
+    st.subheader("🧮 Views by Price Range")
+    bins = [0, 200, 400, 600, 800, 1000, np.inf]
+    labels = ["<$200", "$200–400", "$400–600", "$600–800", "$800–1000", "$1000+"]
+    df["price_bin"] = pd.cut(df["price"], bins=bins, labels=labels, include_lowest=True)
+    conv_data = df[df["event_type"].isin(["view", "purchase"])]
+    grouped = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0).reset_index()
+    grouped["view"] = grouped["view"].round(0).astype(int)
+    fig = px.bar(grouped, x="price_bin", y="view", text="view",
+                 labels={"view": "Views", "price_bin": "Price Range"},
+                 title="Views by Price Range")
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.subheader("🛍️ Top Basket Items")    if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
@@ -188,6 +207,8 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
+
+
 
 
 
