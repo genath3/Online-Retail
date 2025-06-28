@@ -11,22 +11,24 @@ from sklearn.cluster import KMeans
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
-st.title("\U0001F4F1 Xiaomi Phones")
+st.title("\U0001F4F1 Xiaomi Phones - October 2019 Dashboard")
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
-from huggingface_hub import hf_hub_download
+import requests
+from io import StringIO
 
 @st.cache_data
-
 def load_data():
-    from huggingface_hub import hf_hub_download
-    file_path = hf_hub_download(
-        repo_id="7ng10dpE/Online-Retail",
-        filename="xiaomi_cleaned.csv",
-        token=st.secrets["huggingface"]["token"]
-    )
-    df = pd.read_csv(file_path)
+    url = "https://huggingface.co/datasets/genath3/Xiaomi/resolve/main/xiaomi_cleaned.csv"
+    headers = {"Authorization": f"Bearer {st.secrets['huggingface']['token']}"}
+
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        st.error(f"Failed to fetch file. Status code: {response.status_code}")
+        st.stop()
+
+    df = pd.read_csv(StringIO(response.text))
     df["event_time"] = pd.to_datetime(df["event_time"], errors="coerce")
     df["brand"] = df["brand"].astype(str).str.lower()
     df = df[df["brand"] == "xiaomi"]
@@ -47,10 +49,7 @@ avg_price = purchases["price"].mean()
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
-    "\U0001F4CA Market Overview",
-    "⏰ Time Analysis",
-    "\U0001F6CD Basket & Pricing",
-    "\U0001F52E Predictive Insights"
+    "📊 Market Overview", "⏰ Time Analysis", "🛒 Basket & Pricing", "🔮 Predictive Insights"
 ])
 
 # --- TAB 1: MARKET OVERVIEW ---
