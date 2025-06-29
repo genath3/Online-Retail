@@ -88,7 +88,7 @@ with tab1:
         x="date",
         y="count",
         color="event_type",
-        color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
+        color_discrete_map={"Viewed": "#ff6900", "Purchased": "#002f5f"},
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
@@ -114,9 +114,10 @@ with tab1:
         y="Stage",
         x="Count",
         color="Stage",
-        color_discrete_map={"Viewed": "#002f5f", "Added to Cart": "#888888", "Purchased": "#ff6900"},
+        color_discrete_map={"Viewed": "#ff6900", "Added to Cart": "#888888", "Purchased": "#002f5f"},
         title="🔁 Funnel: Views to Cart to Purchase"
-    ).update_traces(textinfo='percent+value', texttemplate='%{percent:.1%}')
+    )
+    fig_funnel.update_traces(texttemplate="%{label}: %{value}").update_traces(textinfo='percent+value', texttemplate='%{percent:.1%}')
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
@@ -250,6 +251,8 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
+
+
 
 
 
