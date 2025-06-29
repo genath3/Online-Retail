@@ -10,6 +10,7 @@ from sklearn.metrics import classification_report
 from sklearn.cluster import KMeans
 
 # --- CONFIG ---
+import xgboost
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
 st.title("📱 Xiaomi Phones Dashboard")
 
@@ -272,6 +273,9 @@ with tab4:
         
         This model is designed to rank sessions by likelihood of purchase, prioritizing recall over precision to avoid missing high-intent buyers.
     """)
+
+
+
 
 
 
