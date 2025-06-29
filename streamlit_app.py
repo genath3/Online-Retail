@@ -101,6 +101,7 @@ with tab1:
     st.plotly_chart(fig_bar, use_container_width=True)
 
     funnel_counts = df["event_type"].value_counts()
+    funnel_counts = df["event_type"].value_counts()
     funnel_data = pd.DataFrame({
         "Stage": ["Viewed", "Added to Cart", "Purchased"],
         "Count": [
@@ -109,15 +110,16 @@ with tab1:
             funnel_counts.get("purchase", 0)
         ]
     })
+    funnel_data["Stage"] = pd.Categorical(funnel_data["Stage"], categories=["Viewed", "Added to Cart", "Purchased"], ordered=True)
     fig_funnel = px.funnel(
         funnel_data,
         y="Stage",
         x="Count",
         color="Stage",
-        color_discrete_map={"Viewed": "#ff6900", "Added to Cart": "#888888", "Purchased": "#002f5f"},
+        color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to Cart": "#888888", "Purchased": "#002f5f"},
         title="🔁 Funnel: Views to Cart to Purchase"
     )
-    fig_funnel.update_traces(texttemplate="%{label}: %{value}")
+    fig_funnel.update_traces(texttemplate="%{y}: %{x}")
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
