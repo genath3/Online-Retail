@@ -161,11 +161,10 @@ with tab2:
 
 # --- TAB 3: BASKET & PRICING ---
 with tab3:
-    st.markdown("### 💰 Price Distribution")
+    st.markdown("### 💰 Price Distribution of Purchases")
     fig_price = px.histogram(purchases, x="price", nbins=30,
                              color_discrete_sequence=[XIAOMI_ORANGE],
                              text_auto=True,
-                             title="Price Distribution of Purchases",
                              labels={"price": "Price (USD)", "count": "Frequency"})
     st.plotly_chart(fig_price, use_container_width=True)
 
@@ -187,8 +186,7 @@ with tab3:
     grouped["view"] = grouped["view"].round(0).astype(int)
     grouped["view"] = grouped["view"].astype(int)
     fig = px.bar(grouped, x="price_bin", y="view", text="view", color_discrete_sequence=[XIAOMI_ORANGE],
-                 labels={"view": "Views", "price_bin": "Price Range"},
-                 title="Views by Price Range")
+                 labels={"view": "Views", "price_bin": "Price Range"},)
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("### 🛍️ Top Basket Items")
