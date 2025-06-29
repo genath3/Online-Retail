@@ -8,3 +8,4 @@ scikit-learn
 joblib
 huggingface_hub
 xgboost
+requests
