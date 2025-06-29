@@ -252,7 +252,7 @@ with tab4:
         number={'suffix': "%"},
         gauge={
             'axis': {'range': [0, 100]},
-            'bar': {'color': XIAOMI_ORANGE},
+            'bar': {'color': '#002f5f'},
             'steps': [
                 {'range': [0, 25], 'color': "#f9e4dc"},
                 {'range': [25, 50], 'color': "#fcd6bf"},
@@ -266,13 +266,14 @@ with tab4:
     st.markdown("""
         ### 📊 Model Performance Summary
         - **Model**: XGBoost (balanced)
-        - **Recall (class 1)**: ~0.54
-        - **Precision (class 1)**: ~0.11
-        - **ROC AUC**: ~0.53
-        - **PR AUC**: ~0.11
+        - **Recall (class 1)**: 0.54
+        - **Precision (class 1)**: 0.11
+        - **ROC AUC**: 0.53
+        - **PR AUC**: 0.11
         
         This model is designed to rank sessions by likelihood of purchase, prioritizing recall over precision to avoid missing high-intent buyers.
     """)
+
 
 
 
