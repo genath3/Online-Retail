@@ -221,3 +221,4 @@ with tab4:
     except Exception as e:
         st.error(f"Model prediction failed: {e}")
 
+
