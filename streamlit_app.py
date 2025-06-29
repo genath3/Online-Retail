@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
-st.title("📱 Xiaomi Phones – Dashboard Overview")
+st.title("📱 Xiaomi Phones Dashboard")
 
 # Xiaomi styling
 XIAOMI_ORANGE = "#ff6900"
@@ -87,14 +87,14 @@ with tab1:
         x="date",
         y="count",
         color="event_type",
-        color_discrete_map={"view": "#002f5f", "purchase": "#ff6900"},
+        color_discrete_map={"view": "#ff6900", "purchase": "#002f5f"},
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
         category_orders={"event_type": ["View", "Purchase"]},
         text_auto=True,
         title="Daily Event Volume"
-    ).update_traces(insidetextfont=dict(size=14))
+    ).update_traces(insidetextfont=dict(size=16), textposition="outside")
     st.plotly_chart(fig_bar, use_container_width=True)
 
     funnel_data = pd.DataFrame({
@@ -107,7 +107,7 @@ with tab1:
         values="Count",
         color="Stage",
         color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
-        title="🔁 Xiaomi Funnel: Views to Purchases",
+        title="🔁 Views to Purchases Funnel",
         hole=0
     ).update_traces(textinfo='percent+value')
     st.plotly_chart(fig_funnel, use_container_width=True)
@@ -150,12 +150,13 @@ with tab2:
 with tab3:
     st.markdown("### 💰 Price Distribution")
     fig_price = px.histogram(purchases, x="price", nbins=30,
+                             color_discrete_sequence=[XIAOMI_ORANGE],
                              title="Price Distribution of Purchases",
                              labels={"price": "Price (USD)", "count": "Frequency"})
     st.plotly_chart(fig_price, use_container_width=True)
 
     st.markdown("### 📦 Price Range (Box Plot)")
-    box_fig = px.box(purchases, y="price", title="Price Range (Box Plot)")
+    box_fig = px.box(purchases, y="price", title="Price Range (Box Plot)", color_discrete_sequence=[XIAOMI_ORANGE])
     st.plotly_chart(box_fig, use_container_width=True)
 
     st.markdown("### 🧮 Views by Price Range")
@@ -165,7 +166,7 @@ with tab3:
     conv_data = df[df["event_type"].isin(["view", "purchase"])]
     grouped = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0).reset_index()
     grouped["view"] = grouped["view"].round(0).astype(int)
-    fig = px.bar(grouped, x="price_bin", y="view", text="view",
+    fig = px.bar(grouped, x="price_bin", y="view", text="view", color_discrete_sequence=[XIAOMI_ORANGE],
                  labels={"view": "Views", "price_bin": "Price Range"},
                  title="Views by Price Range")
     st.plotly_chart(fig, use_container_width=True)
@@ -208,7 +209,27 @@ with tab4:
     input_df = pd.DataFrame({"price": [price_input], "hour": [hour_input]})
     prob = model.predict_proba(input_df)[0][1] * 100
 
+    import plotly.graph_objects as go
+
     st.metric(label="Estimated Purchase Probability", value=f"{prob:.0f}%")
+
+    st.markdown("### 🔍 Visual Scale")
+    gauge_fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=prob,
+        number={'suffix': "%"},
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'color': XIAOMI_ORANGE},
+            'steps': [
+                {'range': [0, 25], 'color': "#f9e4dc"},
+                {'range': [25, 50], 'color': "#fcd6bf"},
+                {'range': [50, 75], 'color': "#ffab7b"},
+                {'range': [75, 100], 'color': "#ff6900"}
+            ]
+        }
+    ))
+    st.plotly_chart(gauge_fig, use_container_width=True)
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
