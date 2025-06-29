@@ -51,8 +51,8 @@ views = df[df["event_type"] == "view"]
 purchases = df[df["event_type"] == "purchase"]
 total_views = len(views)
 total_purchases = len(purchases)
-conversion_rate = (total_purchases / total_views * 100) if total_views else 0
-avg_price = purchases["price"].mean()
+conversion_rate = round((total_purchases / total_views * 100), 1) if total_views else 0
+avg_price = int(purchases["price"].mean())
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
@@ -87,14 +87,16 @@ with tab1:
         x="date",
         y="count",
         color="event_type",
-        color_discrete_map={"view": "#ff6900", "purchase": "#002f5f"},
+        color_discrete_map={"View": "#ff6900", "Purchase": "#002f5f"},
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
         category_orders={"event_type": ["View", "Purchase"]},
         text_auto=True,
         title="Daily Event Volume"
-    ).update_traces(insidetextfont=dict(size=16), textposition="outside")
+    )
+    fig_bar.update_traces(texttemplate="%{text}")
+    fig_bar.for_each_trace(lambda t: t.update(textposition="outside", textfont=dict(size=18)) if t.name == "purchase" else t.update(textposition="outside", textfont=dict(size=16)))
     st.plotly_chart(fig_bar, use_container_width=True)
 
     funnel_data = pd.DataFrame({
@@ -109,7 +111,7 @@ with tab1:
         color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
         title="🔁 Views to Purchases Funnel",
         hole=0
-    ).update_traces(textinfo='percent+value')
+    ).update_traces(textinfo='percent+value', texttemplate='%{percent:.1%} (%{value:.0f})')
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
@@ -151,12 +153,13 @@ with tab3:
     st.markdown("### 💰 Price Distribution")
     fig_price = px.histogram(purchases, x="price", nbins=30,
                              color_discrete_sequence=[XIAOMI_ORANGE],
+                             text_auto=True,
                              title="Price Distribution of Purchases",
                              labels={"price": "Price (USD)", "count": "Frequency"})
     st.plotly_chart(fig_price, use_container_width=True)
 
-    st.markdown("### 📦 Price Range (Box Plot)")
-    box_fig = px.box(purchases, y="price", title="Price Range (Box Plot)", color_discrete_sequence=[XIAOMI_ORANGE])
+    st.markdown("### 📦 Price Range")
+    box_fig = px.box(purchases, y="price", color_discrete_sequence=[XIAOMI_ORANGE], points="all")
     st.plotly_chart(box_fig, use_container_width=True)
 
     st.markdown("### 🧮 Views by Price Range")
@@ -166,6 +169,7 @@ with tab3:
     conv_data = df[df["event_type"].isin(["view", "purchase"])]
     grouped = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0).reset_index()
     grouped["view"] = grouped["view"].round(0).astype(int)
+    grouped["view"] = grouped["view"].astype(int)
     fig = px.bar(grouped, x="price_bin", y="view", text="view", color_discrete_sequence=[XIAOMI_ORANGE],
                  labels={"view": "Views", "price_bin": "Price Range"},
                  title="Views by Price Range")
