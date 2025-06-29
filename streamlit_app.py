@@ -154,5 +154,3 @@ with tab4:
         st.plotly_chart(gauge_fig, use_container_width=True)
     except Exception as e:
         st.error(f"Model prediction failed: {e}")
-
-
