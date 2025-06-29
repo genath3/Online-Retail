@@ -114,7 +114,7 @@ with tab1:
     funnel_data["Stage"] = pd.Categorical(funnel_data["Stage"], categories=["Viewed", "Added to Cart", "Purchased"], ordered=True)
     funnel_data["Stage"] = pd.Categorical(funnel_data["Stage"], categories=["Viewed", "Added to Cart", "Purchased"], ordered=True)
     fig_funnel = px.funnel(
-        funnel_data,
+        funnel_data.sort_values(by="Stage", ascending=False),
         y="Stage",
         x="Count",
         color="Stage",
