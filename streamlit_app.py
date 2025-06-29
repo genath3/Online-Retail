@@ -207,12 +207,15 @@ with tab3:
 # --- TAB 4: PREDICTIVE INSIGHTS ---
 @st.cache_resource
 def get_model():
-    clf_df = df[df["event_type"].isin(["view", "purchase"])].copy()
-    clf_df["label"] = (clf_df["event_type"] == "purchase").astype(int)
-    X = clf_df[["price", "hour"]].fillna(0)
-    y = clf_df["label"]
-    model = RandomForestClassifier(n_estimators=100, random_state=42)
-    model.fit(X, y)
+    from joblib import load
+    from huggingface_hub import hf_hub_download
+
+    path = hf_hub_download(
+        repo_id="genath3/xiaomi-purchase-model",
+        filename="xiaomi_model_xgboost.joblib",
+        token=st.secrets["huggingface"]["token"]
+    )
+    model = load(path)
     return model
 
 with tab4:
@@ -227,6 +230,15 @@ with tab4:
 
     input_df = pd.DataFrame({"price": [price_input], "hour": [hour_input]})
     prob = model.predict_proba(input_df)[0][1] * 100
+
+    if prob >= 75:
+        st.success("🔥 High likelihood of purchase")
+    elif prob >= 50:
+        st.info("👍 Moderate likelihood of purchase")
+    elif prob >= 25:
+        st.warning("⚠️ Low likelihood of purchase")
+    else:
+        st.error("❌ Very low likelihood of purchase")
 
     import plotly.graph_objects as go
 
@@ -251,10 +263,17 @@ with tab4:
     st.plotly_chart(gauge_fig, use_container_width=True)
 
     st.markdown("""
-        <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
-        </div>
-    """, unsafe_allow_html=True)
+        ### 📊 Model Performance Summary
+        - **Model**: XGBoost (balanced)
+        - **Recall (class 1)**: ~0.54
+        - **Precision (class 1)**: ~0.11
+        - **ROC AUC**: ~0.53
+        - **PR AUC**: ~0.11
+        
+        This model is designed to rank sessions by likelihood of purchase, prioritizing recall over precision to avoid missing high-intent buyers.
+    """)
+
+
 
 
 
