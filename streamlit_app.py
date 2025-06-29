@@ -112,6 +112,7 @@ with tab1:
     })
     funnel_data["Stage"] = pd.Categorical(funnel_data["Stage"], categories=["Viewed", "Added to Cart", "Purchased"], ordered=True)
     funnel_data["Stage"] = pd.Categorical(funnel_data["Stage"], categories=["Viewed", "Added to Cart", "Purchased"], ordered=True)
+    funnel_data["Stage"] = pd.Categorical(funnel_data["Stage"], categories=["Viewed", "Added to Cart", "Purchased"], ordered=True)
     fig_funnel = px.funnel(
         funnel_data,
         y="Stage",
@@ -120,7 +121,7 @@ with tab1:
         color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to Cart": "#888888", "Purchased": "#002f5f"},
         title="🔁 Funnel: Views to Cart to Purchase"
     )
-    fig_funnel.update_traces(texttemplate="%{y}: %{x}", connector=dict(line=dict(color="#cccccc", width=1)))
+    fig_funnel.update_traces(texttemplate="%{y}: %{x}")
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
