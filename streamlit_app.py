@@ -11,6 +11,7 @@ from sklearn.cluster import KMeans
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
+st.title("📱 Xiaomi Phones – Dashboard Overview")
 
 # Xiaomi styling
 XIAOMI_ORANGE = "#ff6900"
@@ -86,7 +87,7 @@ with tab1:
         x="date",
         y="count",
         color="event_type",
-        color_discrete_map={"view": "#636EFA", "purchase": "#EF553B"},
+        color_discrete_map={"view": "#002f5f", "purchase": "#ff6900"},
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
@@ -105,9 +106,9 @@ with tab1:
         names="Stage",
         values="Count",
         color="Stage",
-        color_discrete_map={"Viewed": "#636EFA", "Purchased": "#EF553B"},
+        color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
         title="🔁 Xiaomi Funnel: Views to Purchases",
-        hole=0.3
+        hole=0
     ).update_traces(textinfo='percent+value')
     st.plotly_chart(fig_funnel, use_container_width=True)
 
@@ -173,7 +174,8 @@ with tab3:
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
-        top_basket["Frequency"] = top_basket["Frequency"].round(0).astype(int)
+        top_basket.columns = ["Item", "Frequency"]
+        top_basket["Frequency"] = top_basket["Frequency"].astype(int)
         st.dataframe(top_basket)
 
     st.markdown("""
@@ -213,8 +215,6 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
-
-
 
 
 
