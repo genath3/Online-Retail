@@ -117,7 +117,7 @@ with tab1:
         color_discrete_map={"Viewed": "#ff6900", "Added to Cart": "#888888", "Purchased": "#002f5f"},
         title="🔁 Funnel: Views to Cart to Purchase"
     )
-    fig_funnel.update_traces(texttemplate="%{label}: %{value}").update_traces(textinfo='percent+value', texttemplate='%{percent:.1%}')
+    fig_funnel.update_traces(texttemplate="%{label}: %{value}")
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
