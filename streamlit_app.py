@@ -245,7 +245,6 @@ with tab4:
 
     st.metric(label="Estimated Purchase Probability", value=f"{prob:.0f}%")
 
-    st.markdown("### 🔍 Visual Scale")
     gauge_fig = go.Figure(go.Indicator(
         mode="gauge+number",
         value=prob,
