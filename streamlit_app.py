@@ -87,7 +87,7 @@ with tab1:
         x="date",
         y="count",
         color="event_type",
-        color_discrete_map={"View": "#ff6900", "Purchase": "#002f5f"},
+        color_discrete_map={"View": "#002f5f", "Purchase": "#ff6900"},
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
@@ -111,7 +111,7 @@ with tab1:
         color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
         title="🔁 Views to Purchases Funnel",
         hole=0
-    ).update_traces(textinfo='percent+value', texttemplate='%{percent:.1%} (%{value:.0f})')
+    ).update_traces(textinfo='percent+value', texttemplate='%{percent:.1%}')
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown("""
@@ -159,8 +159,13 @@ with tab3:
     st.plotly_chart(fig_price, use_container_width=True)
 
     st.markdown("### 📦 Price Range")
-    box_fig = px.box(purchases, y="price", color_discrete_sequence=[XIAOMI_ORANGE], points="all")
+    box_fig = px.box(purchases, y="price", color_discrete_sequence=[XIAOMI_ORANGE], points=False)
     st.plotly_chart(box_fig, use_container_width=True)
+
+    desc_stats = purchases['price'].describe()[["min", "25%", "50%", "75%", "max", "mean"]].round(2)
+    desc_stats.index = ["Min", "Q1 (25%)", "Median", "Q3 (75%)", "Max", "Mean"]
+    st.markdown("### 📊 Price Summary Table")
+    st.dataframe(desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}))
 
     st.markdown("### 🧮 Views by Price Range")
     bins = [0, 200, 400, 600, 800, 1000, np.inf]
@@ -240,6 +245,5 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
-
 
 
