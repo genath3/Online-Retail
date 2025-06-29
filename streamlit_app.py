@@ -29,7 +29,12 @@ from io import StringIO
 @st.cache_data
 def load_data():
     url = "https://huggingface.co/datasets/genath3/Xiaomi/resolve/main/xiaomi_cleaned.csv"
-    headers = {"Authorization": f"Bearer {st.secrets['huggingface']['token']}"}
+
+import os
+
+token = os.getenv("HF_TOKEN", "")
+headers = {"Authorization": f"Bearer {token}"}
+
 
     response = requests.get(url, headers=headers)
     if response.status_code != 200:
