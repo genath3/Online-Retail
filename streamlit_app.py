@@ -17,13 +17,7 @@ XIAOMI_ORANGE = "#ff6900"
 XIAOMI_BLACK = "#000000"
 XIAOMI_WHITE = "#ffffff"
 
-# Xiaomi logo and banner styling
-st.markdown("""
-    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Xiaomi_logo.svg/512px-Xiaomi_logo.svg.png" width="60">
-        <h1 style="color: #ff6900; margin: 0;">Xiaomi Phones - October 2019 Dashboard</h1>
-    </div>
-""", unsafe_allow_html=True)
+
 st.markdown("This dashboard provides insights into Xiaomi phone interactions, sales, and behavioral patterns for October 2019.")
 
 # --- LOAD DATA ---
@@ -219,6 +213,7 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
+
 
 
 
