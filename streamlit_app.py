@@ -69,6 +69,7 @@ with tab1:
 
     daily_counts = df.groupby(["date", "event_type"]).size().reset_index(name="count")
     daily_counts = daily_counts[daily_counts["event_type"].isin(["view", "purchase"])]
+    daily_counts["event_type"] = daily_counts["event_type"].replace({"view": "Viewed", "purchase": "Purchased"})
     daily_counts["count"] = daily_counts["count"].round(0).astype(int)
 
     
@@ -87,7 +88,7 @@ with tab1:
         x="date",
         y="count",
         color="event_type",
-        color_discrete_map={"View": "#002f5f", "Purchase": "#ff6900"},
+        color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
         text="count",
         barmode="stack",
         labels={"date": "Date", "count": yaxis_label, "event_type": "Event Type"},
@@ -99,18 +100,22 @@ with tab1:
     fig_bar.for_each_trace(lambda t: t.update(textposition="outside", textfont=dict(size=18)) if t.name == "purchase" else t.update(textposition="outside", textfont=dict(size=16)))
     st.plotly_chart(fig_bar, use_container_width=True)
 
+    funnel_counts = df["event_type"].value_counts()
     funnel_data = pd.DataFrame({
-        "Stage": ["Viewed", "Purchased"],
-        "Count": [total_views, total_purchases]
+        "Stage": ["Viewed", "Added to Cart", "Purchased"],
+        "Count": [
+            funnel_counts.get("view", 0),
+            funnel_counts.get("cart", 0),
+            funnel_counts.get("purchase", 0)
+        ]
     })
-    fig_funnel = px.pie(
+    fig_funnel = px.funnel(
         funnel_data,
-        names="Stage",
-        values="Count",
+        y="Stage",
+        x="Count",
         color="Stage",
-        color_discrete_map={"Viewed": "#002f5f", "Purchased": "#ff6900"},
-        title="🔁 Views to Purchases Funnel",
-        hole=0
+        color_discrete_map={"Viewed": "#002f5f", "Added to Cart": "#888888", "Purchased": "#ff6900"},
+        title="🔁 Funnel: Views to Cart to Purchase"
     ).update_traces(textinfo='percent+value', texttemplate='%{percent:.1%}')
     st.plotly_chart(fig_funnel, use_container_width=True)
 
@@ -245,5 +250,6 @@ with tab4:
         🧠 <b>Insight:</b> Use this simulator to test how likely users are to purchase at different price points and times.
         </div>
     """, unsafe_allow_html=True)
+
 
 
