@@ -246,7 +246,7 @@ with tab4:
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        <b>Insight:</b> 🧠 This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
+        <b>Insight:</b> This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
         </div>
     """, unsafe_allow_html=True)
   
