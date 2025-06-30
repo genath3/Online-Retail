@@ -77,7 +77,7 @@ avg_price = 207.86
 
 # --- TABS ---
 tab1, tab2, tab3, tab4 = st.tabs([
-    "1️⃣ Market overview", "2️⃣ Time analysis", "3️⃣ Basket & pricing", "4️⃣ Predictive insights"
+    "1️⃣ Market Overview", "2️⃣ Time Analysis", "3️⃣ Basket & Pricing", "4️⃣ Predictive Insights"
 ])
 
 # --- TAB 1 ---
@@ -95,8 +95,8 @@ with tab1:
 
     fig_bar = px.bar(
         daily_counts,
-        x="date",
-        y="count",
+        x="Date",
+        y="Count",
         color="event_type",
         barmode="stack",
         title="📊 Daily Event Volume",
@@ -105,12 +105,20 @@ with tab1:
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    funnel_data = df["event_type"].value_counts().reindex(["purchase", "cart", "view"]).fillna(0).astype(int)
-    funnel_df = pd.DataFrame({"Stage": ["Purchased", "Added to cart", "Viewed"], "Count": funnel_data.values})
+    funnel_data = df["event_type"].value_counts().reindex(["view", "cart", "purchase"]).fillna(0).astype(int)
+    funnel_df = pd.DataFrame({"Stage": ["Viewed", "Added to cart", "Purchased"], "Count": funnel_data.values})
     funnel_df = funnel_df.sort_values(by="Stage", ascending=False)
-    fig_funnel = px.funnel(funnel_df, y="Stage", x="Count", color="Stage",
-                           color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to cart": "gray", "Purchased": "#002f5f"},
-                           title="🔁 Funnel: Views to Cart to Purchase")
+
+    fig_funnel = px.funnel(
+        funnel_df,
+        y="Stage",
+        x="Count",
+        color="Stage",
+        color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to Cart": "gray", "Purchased": "#002f5f"},
+        title="🔁 Funnel: Views to Cart to Purchase",
+        text=funnel_df["Count"].apply(lambda x: f"{x:,}")
+    )
+    fig_funnel.update_traces(textposition="outside")
     st.plotly_chart(fig_funnel, use_container_width=True)
     
     st.markdown("""
@@ -149,7 +157,7 @@ with tab2:
 # --- TAB 3 ---
 with tab3:
     fig_price = px.histogram(purchases, x="price", nbins=30, color_discrete_sequence=[XIAOMI_ORANGE],
-                             title="💰 Price Distribution of Purchases", labels={"price": "Price (USD)", "count": "Frequency"}, text_auto=True)
+                             title="💰 Price Distribution of Purchases", labels={"price": "Price (USD)", "Count": "Frequency"}, text_auto=True)
     st.plotly_chart(fig_price, use_container_width=True)
 
     bins = [0, 200, 400, 600, 800, 1000, np.inf]
@@ -170,13 +178,15 @@ with tab3:
     )
     st.plotly_chart(fig_price_buckets, use_container_width=True)
     
-    fig_box = px.box(purchases, y="price", color_discrete_sequence=[XIAOMI_ORANGE],
+    fig_box = px.box(purchases, y="Price", color_discrete_sequence=[XIAOMI_ORANGE],
                      title="📦 Price Range", points=False)
     st.plotly_chart(fig_box, use_container_width=True)
 
-    stats = purchases['price'].describe().round(2).rename({"25%": "Q1", "50%": "Median", "75%": "Q3"})
+    desc_stats = purchases['price'].describe()[["min", "25%", "50%", "75%", "max", "mean"]].round(2)
+    desc_stats.index = ["Min", "Q1 (25%)", "Median", "Q3 (75%)", "Max", "Mean"]
     st.markdown("### 📊 Price Summary Table")
-    st.dataframe(stats)
+    st.dataframe(desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}))
+
 
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         st.markdown("### 🛍️ Top Basket Items")
@@ -234,9 +244,12 @@ with tab4:
             - **ROC AUC**: 0.53
             - **PR AUC**: 0.11
 
-            This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
-        """)
-    except Exception as e:
-        st.error(f"Model prediction failed: {e}")
+    st.markdown("""
+        <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
+        🧠 <b>Insight:</b> This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
+        </div>
+    """, unsafe_allow_html=True)
+            
+  
 
 
