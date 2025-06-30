@@ -249,7 +249,7 @@ with tab4:
         🧠 <b>Insight:</b> This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
         </div>
     """, unsafe_allow_html=True)
-            
+  
   
 
 
