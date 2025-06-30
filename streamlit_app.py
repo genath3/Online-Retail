@@ -205,39 +205,46 @@ with tab3:
 # --- TAB 4 ---
 with tab4:
     st.subheader("Purchase Probability Simulator")
-    price_input = st.slider("Select product price (USD):", 0, 1000, 500)
-    hour_input = st.slider("Select hour of day (0–23):", 0, 23, 14)
-    try:
-        prob = model.predict_proba(pd.DataFrame({"price": [price_input], "hour": [hour_input]}))[0][1] * 100
-        st.metric("Estimated Purchase Probability", f"{prob:.1f}%")
-        if prob >= 75:
-            st.success("🔥 High likelihood of purchase")
-        elif prob >= 50:
-            st.info("👍 Moderate likelihood of purchase")
-        elif prob >= 25:
-            st.warning("⚠️ Low likelihood of purchase")
-        else:
-            st.error("❌ Very low likelihood of purchase")
 
-        gauge_fig = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=prob,
-            number={'suffix': "%"},
-            gauge={
-                'axis': {'range': [0, 100]},
-                'bar': {'color': '#002f5f'},
-                'steps': [
-                    {'range': [0, 25], 'color': "#f9e4dc"},
-                    {'range': [25, 50], 'color': "#fcd6bf"},
-                    {'range': [50, 75], 'color': "#ffab7b"},
-                    {'range': [75, 100], 'color': XIAOMI_ORANGE}
-                ]
-            }
-        ))
-        st.plotly_chart(gauge_fig, use_container_width=True)
+    col1, col2 = st.columns(2)
+    with col1:
+        price_input = st.slider("Select product price (USD):", 0, 1000, 500, step=10)
+    with col2:
+        hour_input = st.slider("Select hour of day (0–23):", 0, 23, 14)
+
+    input_df = pd.DataFrame({"price": [price_input], "hour": [hour_input]})
+    prob = model.predict_proba(input_df)[0][1] * 100
+
+    if prob >= 75:
+        st.success("🔥 High likelihood of purchase")
+    elif prob >= 50:
+        st.info("👍 Moderate likelihood of purchase")
+    elif prob >= 25:
+        st.warning("⚠️ Low likelihood of purchase")
+    else:
+        st.error("❌ Very low likelihood of purchase")
+
+    st.metric(label="Estimated purchase probability", value=f"{prob:.0f}%")
+
+    gauge_fig = go.Figure(go.Indicator(
+        mode="gauge+number",
+        value=prob,
+        number={'suffix': "%"},
+        gauge={
+            'axis': {'range': [0, 100]},
+            'bar': {'color': '#002f5f'},
+            'steps': [
+                {'range': [0, 25], 'color': "#f9e4dc"},
+                {'range': [25, 50], 'color': "#fcd6bf"},
+                {'range': [50, 75], 'color': "#ffab7b"},
+                {'range': [75, 100], 'color': "#ff6900"}
+            ]
+        }
+    ))
+    st.plotly_chart(gauge_fig, use_container_width=True)
 
     st.markdown("""
-        ### Model performance summary
+        ### Model Performance Summary
         - **Model**: XGBoost (balanced)
         - **Recall (class 1)**: 0.54
         - **Precision (class 1)**: 0.11
