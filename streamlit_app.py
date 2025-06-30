@@ -122,7 +122,7 @@ with tab1:
 
     st.markdown(f"""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-         🧠 <b>Insight:</b> Conversion rate is {conversion_rate:.1f}%. There’s an opportunity to boost this through retargeting or urgency-based messaging.
+         🧠 <b>Insight:</b> Conversion rate is {conversion_rate:.1f}%. There is an opportunity to increase this number through analysis of promotion timing and placement.
         </div>
     """, unsafe_allow_html=True)
 
