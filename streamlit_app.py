@@ -95,8 +95,8 @@ with tab1:
 
     fig_bar = px.bar(
         daily_counts,
-        x="Date",
-        y="Count",
+        x="date",
+        y="count",
         color="event_type",
         barmode="stack",
         title="Daily Event Volume",
