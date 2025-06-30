@@ -99,7 +99,7 @@ with tab1:
         y="Count",
         color="event_type",
         barmode="stack",
-        title="📊 Daily Event Volume",
+        title="Daily Event Volume",
         color_discrete_map={"Viewed": XIAOMI_ORANGE, "Purchased": "#002f5f"},
         text_auto=True
     )
@@ -115,7 +115,7 @@ with tab1:
         x="Count",
         color="Stage",
         color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to Cart": "gray", "Purchased": "#002f5f"},
-        title="🔁 Funnel: Views to Cart to Purchase",
+        title="Funnel: Views to Cart to Purchase",
         text=funnel_df["Count"].apply(lambda x: f"{x:,}")
     )
     fig_funnel.update_traces(textposition="outside")
@@ -144,7 +144,7 @@ with tab2:
         "Purchases": purchases.groupby("hour").size().reindex(range(24), fill_value=0).values
     })
     fig_line = px.line(hourly_df, x="Hour", y=["Views", "Purchases"],
-                       title="⏰ Hourly Xiaomi Activity",
+                       title="Hourly Xiaomi Activity",
                        labels={"value": "Event count", "variable": "Event type"})
     st.plotly_chart(fig_line, use_container_width=True)
 
@@ -157,7 +157,7 @@ with tab2:
 # --- TAB 3 ---
 with tab3:
     fig_price = px.histogram(purchases, x="price", nbins=30, color_discrete_sequence=[XIAOMI_ORANGE],
-                             title="💰 Price Distribution of Purchases", labels={"price": "Price (USD)", "Count": "Frequency"}, text_auto=True)
+                             title="Price Distribution of Purchases", labels={"price": "Price (USD)", "Count": "Frequency"}, text_auto=True)
     st.plotly_chart(fig_price, use_container_width=True)
 
     bins = [0, 200, 400, 600, 800, 1000, np.inf]
@@ -174,22 +174,22 @@ with tab3:
         text="view",
         color_discrete_sequence=[XIAOMI_ORANGE],
         labels={"view": "Views", "price_bin": "Price Range"},
-        title="📦 Views by Price Range"
+        title="Views by Price Range"
     )
     st.plotly_chart(fig_price_buckets, use_container_width=True)
     
     fig_box = px.box(purchases, y="Price", color_discrete_sequence=[XIAOMI_ORANGE],
-                     title="📦 Price Range", points=False)
+                     title="Price Range", points=False)
     st.plotly_chart(fig_box, use_container_width=True)
 
     desc_stats = purchases['price'].describe()[["min", "25%", "50%", "75%", "max", "mean"]].round(2)
     desc_stats.index = ["Min", "Q1 (25%)", "Median", "Q3 (75%)", "Max", "Mean"]
-    st.markdown("### 📊 Price Summary Table")
+    st.markdown("### Price Summary Table")
     st.dataframe(desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}))
 
 
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
-        st.markdown("### 🛍️ Top Basket Items")
+        st.markdown("### Top 10 Basket Items")
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
@@ -204,7 +204,7 @@ with tab3:
 
 # --- TAB 4 ---
 with tab4:
-    st.subheader("🎯 Purchase Probability Simulator")
+    st.subheader("Purchase Probability Simulator")
     price_input = st.slider("Select product price (USD):", 0, 1000, 500)
     hour_input = st.slider("Select hour of day (0–23):", 0, 23, 14)
     try:
@@ -237,7 +237,7 @@ with tab4:
         st.plotly_chart(gauge_fig, use_container_width=True)
 
         st.markdown("""
-            ### 📊 Model Performance Summary
+            ### Model Performance Summary
             - **Model**: XGBoost (balanced)
             - **Recall (class 1)**: 0.54
             - **Precision (class 1)**: 0.11
@@ -246,7 +246,7 @@ with tab4:
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        🧠 <b>Insight:</b> This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
+        <b>Insight:</b> 🧠 This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
         </div>
     """, unsafe_allow_html=True)
   
