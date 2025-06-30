@@ -183,25 +183,20 @@ with tab3:
 
 desc_stats = purchases['price'].describe()[["min", "25%", "50%", "75%", "max", "mean"]].round(2)
 desc_stats.index = ["Min", "Q1 (25%)", "Median", "Q3 (75%)", "Max", "Mean"]
+
+st.markdown("### Price Summary Table")
 st.dataframe(
     desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}),
-    use_container_width=True,
-    column_config={"USD": st.column_config.NumberColumn("USD")},
-    height=300,
-    title="Price Summary Table"
+    use_container_width=True
 )
 
 if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
+    st.markdown("### Top 10 Basket Items")
     basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
     top_basket = basket_items.value_counts().head(10).reset_index()
     top_basket.columns = ["Item", "Frequency"]
     top_basket["Frequency"] = top_basket["Frequency"].astype(int)
-    st.dataframe(
-        top_basket,
-        use_container_width=True,
-        height=300,
-        title="Top 10 Basket Items"
-    )
+    st.dataframe(top_basket, use_container_width=True)
 
 st.markdown("""
 <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
