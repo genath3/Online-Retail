@@ -237,7 +237,7 @@ with tab4:
         st.plotly_chart(gauge_fig, use_container_width=True)
 
     st.markdown("""
-        ### 📊 Model performance summary
+        ### Model performance summary
         - **Model**: XGBoost (balanced)
         - **Recall (class 1)**: 0.54
         - **Precision (class 1)**: 0.11
