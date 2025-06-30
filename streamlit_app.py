@@ -236,5 +236,16 @@ with tab4:
         ))
         st.plotly_chart(gauge_fig, use_container_width=True)
 
+    st.markdown("""
+        ### 📊 Model performance summary
+        - **Model**: XGBoost (balanced)
+        - **Recall (class 1)**: 0.54
+        - **Precision (class 1)**: 0.11
+        - **ROC AUC**: 0.53
+        - **PR AUC**: 0.11
 
+        <div style='background-color:#e6f4ff;padding:15px;border-radius:10px;'>
+        🧠 <b>Insight:</b> This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
+        </div>
+    """, unsafe_allow_html=True)
 
