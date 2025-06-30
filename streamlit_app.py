@@ -107,7 +107,7 @@ with tab1:
 
     funnel_data = df["event_type"].value_counts().reindex(["view", "cart", "purchase"]).fillna(0).astype(int)
     funnel_df = pd.DataFrame({"Stage": ["Viewed", "Added to Cart", "Purchased"], "Count": funnel_data.values})
-    funnel_df = funnel_df.sort_values(by="Count", ascending=False)
+    funnel_df = funnel_df.sort_values(by="Count", ascending=True)
 
     fig_funnel = px.funnel(
         funnel_df,
@@ -115,10 +115,9 @@ with tab1:
         x="Count",
         color="Stage",
         color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to Cart": "gray", "Purchased": "#002f5f"},
-        title="Funnel: Views to Cart to Purchase",
-        text=funnel_df["Count"].apply(lambda x: f"{x:,}")
+        title="Funnel: Views to Cart to Purchase"
     )
-    fig_funnel.update_traces(textposition="outside")
+    fig_funnel.update_traces(textinfo="value", textposition="outside")
     st.plotly_chart(fig_funnel, use_container_width=True)
 
     st.markdown(f"""
@@ -184,22 +183,32 @@ with tab3:
 
     desc_stats = purchases['price'].describe()[["min", "25%", "50%", "75%", "max", "mean"]].round(2)
     desc_stats.index = ["Min", "Q1 (25%)", "Median", "Q3 (75%)", "Max", "Mean"]
-    st.markdown("### Price Summary Table")
-    st.dataframe(desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}))
+    st.dataframe(
+    desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}),
+    use_container_width=True,
+    column_config={"USD": st.column_config.NumberColumn("USD")},
+    height=300,
+    title="Price Summary Table"
+    )
 
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
-        st.markdown("### Top 10 Basket Items")
-        basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
-        top_basket = basket_items.value_counts().head(10).reset_index()
-        top_basket.columns = ["Item", "Frequency"]
-        top_basket["Frequency"] = top_basket["Frequency"].astype(int)
-        st.dataframe(top_basket)
+    basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
+    top_basket = basket_items.value_counts().head(10).reset_index()
+    top_basket.columns = ["Item", "Frequency"]
+    top_basket["Frequency"] = top_basket["Frequency"].astype(int)
+    st.dataframe(
+        top_basket,
+        use_container_width=True,
+        height=300,
+        title="Top 10 Basket Items"
+    )
 
     st.markdown("""
-        <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        🧠 <b>Insight:</b> Promoting with common co-purchased items may improve total order value.
-        </div>
+    <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
+    🧠 <b>Insight:</b> Promoting with common co-purchased items may improve total order value.
+    </div>
     """, unsafe_allow_html=True)
+
 
 # --- TAB 4 ---
 with tab4:
