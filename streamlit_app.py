@@ -83,10 +83,10 @@ tab1, tab2, tab3, tab4 = st.tabs([
 # --- TAB 1 ---
 with tab1:
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric("👁️ Total views", f"{total_views:,}")
+    col1.metric("👁️ Total Views", f"{total_views:,}")
     col2.metric("🛒 Purchases", f"{total_purchases:,}")
-    col3.metric("🎯 Conversion rate", f"{conversion_rate:.1f}%")
-    col4.metric("💲 Avg. price", f"${avg_price:.2f}")
+    col3.metric("🎯 Conversion Rate", f"{conversion_rate:.1f}%")
+    col4.metric("💲 Avg. Price", f"${avg_price:.2f}")
 
     daily_counts = df.groupby(["date", "event_type"]).size().reset_index(name="count")
     daily_counts = daily_counts[daily_counts["event_type"].isin(["view", "purchase"])]
@@ -99,23 +99,23 @@ with tab1:
         y="count",
         color="event_type",
         barmode="stack",
-        title="📊 Daily event volume",
+        title="📊 Daily Event Volume",
         color_discrete_map={"Viewed": XIAOMI_ORANGE, "Purchased": "#002f5f"},
         text_auto=True
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    funnel_data = df["event_type"].value_counts().reindex(["view", "cart", "purchase"]).fillna(0).astype(int)
-    funnel_df = pd.DataFrame({"Stage": ["Viewed", "Added to cart", "Purchased"], "Count": funnel_data.values})
+    funnel_data = df["event_type"].value_counts().reindex(["purchase", "cart", "view"]).fillna(0).astype(int)
+    funnel_df = pd.DataFrame({"Stage": ["Purchased", "Added to cart", "Viewed"], "Count": funnel_data.values})
     funnel_df = funnel_df.sort_values(by="Stage", ascending=False)
     fig_funnel = px.funnel(funnel_df, y="Stage", x="Count", color="Stage",
                            color_discrete_map={"Viewed": XIAOMI_ORANGE, "Added to cart": "gray", "Purchased": "#002f5f"},
-                           title="🔁 Funnel: views to cart to purchase")
+                           title="🔁 Funnel: Views to Cart to Purchase")
     st.plotly_chart(fig_funnel, use_container_width=True)
-
+    
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        🧠 <b>Insight:</b> Conversion rate is {:.1f}%. There’s an opportunity to boost this through retargeting or urgency-based messaging.
+        🧠 <b>Insight:</b> Conversion rate is {:.1f}%. There’s an opportunity to boost this number by strategically timing and placing promotions.
         </div>
     """.format(conversion_rate), unsafe_allow_html=True)
 
@@ -123,9 +123,9 @@ with tab1:
 with tab2:
     heatmap1 = views.groupby(["weekday", "hour"]).size().unstack(fill_value=0)
     heatmap2 = purchases.groupby(["weekday", "hour"]).size().unstack(fill_value=0)
-    fig_view = px.imshow(heatmap1, title="Products viewed", color_continuous_scale="Blues",
+    fig_view = px.imshow(heatmap1, title="Products Viewed", color_continuous_scale="Blues",
                          labels=dict(x="Hour", y="Weekday", color="Views"))
-    fig_purchase = px.imshow(heatmap2, title="Products purchased", color_continuous_scale="Reds",
+    fig_purchase = px.imshow(heatmap2, title="Products Purchased", color_continuous_scale="Reds",
                              labels=dict(x="Hour", y="Weekday", color="Purchases"))
     st.plotly_chart(fig_view, use_container_width=True)
     st.plotly_chart(fig_purchase, use_container_width=True)
@@ -136,7 +136,7 @@ with tab2:
         "Purchases": purchases.groupby("hour").size().reindex(range(24), fill_value=0).values
     })
     fig_line = px.line(hourly_df, x="Hour", y=["Views", "Purchases"],
-                       title="⏰ Hourly Xiaomi activity",
+                       title="⏰ Hourly Xiaomi Activity",
                        labels={"value": "Event count", "variable": "Event type"})
     st.plotly_chart(fig_line, use_container_width=True)
 
@@ -149,19 +149,37 @@ with tab2:
 # --- TAB 3 ---
 with tab3:
     fig_price = px.histogram(purchases, x="price", nbins=30, color_discrete_sequence=[XIAOMI_ORANGE],
-                             title="💰 Price distribution of purchases", labels={"price": "Price (USD)", "count": "Frequency"}, text_auto=True)
+                             title="💰 Price Distribution of Purchases", labels={"price": "Price (USD)", "count": "Frequency"}, text_auto=True)
     st.plotly_chart(fig_price, use_container_width=True)
 
+    bins = [0, 200, 400, 600, 800, 1000, np.inf]
+    labels = ["<$200", "$200–400", "$400–600", "$600–800", "$800–1000", "$1000+"]
+    df["price_bin"] = pd.cut(df["price"], bins=bins, labels=labels, include_lowest=True)
+    conv_data = df[df["event_type"].isin(["view", "purchase"])]
+    grouped = conv_data.groupby(["price_bin", "event_type"]).size().unstack(fill_value=0).reset_index()
+    grouped["view"] = grouped["view"].round(0).astype(int)
+
+    fig_price_buckets = px.bar(
+        grouped,
+        x="price_bin",
+        y="view",
+        text="view",
+        color_discrete_sequence=[XIAOMI_ORANGE],
+        labels={"view": "Views", "price_bin": "Price Range"},
+        title="📦 Views by Price Range"
+    )
+    st.plotly_chart(fig_price_buckets, use_container_width=True)
+    
     fig_box = px.box(purchases, y="price", color_discrete_sequence=[XIAOMI_ORANGE],
-                     title="📦 Price range (box plot)", points=False)
+                     title="📦 Price Range", points=False)
     st.plotly_chart(fig_box, use_container_width=True)
 
     stats = purchases['price'].describe().round(2).rename({"25%": "Q1", "50%": "Median", "75%": "Q3"})
-    st.markdown("### 📊 Price summary table")
+    st.markdown("### 📊 Price Summary Table")
     st.dataframe(stats)
 
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
-        st.markdown("### 🛍️ Top basket items")
+        st.markdown("### 🛍️ Top Basket Items")
         basket_items = purchases["basket"].dropna().str.split(",").explode().str.strip()
         top_basket = basket_items.value_counts().head(10).reset_index()
         top_basket.columns = ["Item", "Frequency"]
@@ -170,18 +188,18 @@ with tab3:
 
     st.markdown("""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        🧠 <b>Insight:</b> Bundling common co-purchased items may improve total order value.
+        🧠 <b>Insight:</b> Promoting with common co-purchased items may improve total order value.
         </div>
     """, unsafe_allow_html=True)
 
 # --- TAB 4 ---
 with tab4:
-    st.subheader("🎯 Purchase probability simulator")
+    st.subheader("🎯 Purchase Probability Simulator")
     price_input = st.slider("Select product price (USD):", 0, 1000, 500)
     hour_input = st.slider("Select hour of day (0–23):", 0, 23, 14)
     try:
         prob = model.predict_proba(pd.DataFrame({"price": [price_input], "hour": [hour_input]}))[0][1] * 100
-        st.metric("Estimated purchase probability", f"{prob:.1f}%")
+        st.metric("Estimated Purchase Probability", f"{prob:.1f}%")
         if prob >= 75:
             st.success("🔥 High likelihood of purchase")
         elif prob >= 50:
@@ -209,14 +227,14 @@ with tab4:
         st.plotly_chart(gauge_fig, use_container_width=True)
 
         st.markdown("""
-            ### 📊 Model performance summary
+            ### 📊 Model Performance Summary
             - **Model**: XGBoost (balanced)
             - **Recall (class 1)**: 0.54
             - **Precision (class 1)**: 0.11
             - **ROC AUC**: 0.53
             - **PR AUC**: 0.11
 
-            This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers.
+            This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
         """)
     except Exception as e:
         st.error(f"Model prediction failed: {e}")
