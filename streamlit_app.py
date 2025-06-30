@@ -236,7 +236,7 @@ with tab4:
         ))
         st.plotly_chart(gauge_fig, use_container_width=True)
 
-    st.markdown("""
+        st.markdown("""
         ### 📊 Model performance summary
         - **Model**: XGBoost (balanced)
         - **Recall (class 1)**: 0.54
@@ -248,9 +248,4 @@ with tab4:
         🧠 <b>Insight:</b> This model is designed to rank sessions by likelihood of purchase, prioritizing recall to avoid missing high-intent buyers. This tool should help to target customers based on the price of the item and time of day.
         </div>
     """, unsafe_allow_html=True)
-
-
-  
-  
-
 
