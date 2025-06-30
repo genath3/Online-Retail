@@ -16,7 +16,7 @@ import plotly.graph_objects as go
 
 # --- CONFIG ---
 st.set_page_config(page_title="Xiaomi Dashboard", layout="wide")
-st.title("\U0001F4F1 Xiaomi Phones Dashboard")
+st.title("Xiaomi Phones Dashboard")
 
 # Xiaomi styling
 XIAOMI_ORANGE = "#ff6900"
@@ -106,8 +106,8 @@ with tab1:
     st.plotly_chart(fig_bar, use_container_width=True)
 
     funnel_data = df["event_type"].value_counts().reindex(["view", "cart", "purchase"]).fillna(0).astype(int)
-    funnel_df = pd.DataFrame({"Stage": ["Viewed", "Added to cart", "Purchased"], "Count": funnel_data.values})
-    funnel_df = funnel_df.sort_values(by="Stage", ascending=False)
+    funnel_df = pd.DataFrame({"Stage": ["Viewed", "Added to Cart", "Purchased"], "Count": funnel_data.values})
+    funnel_df = funnel_df.sort_values(by="Count", ascending=False)
 
     fig_funnel = px.funnel(
         funnel_df,
@@ -120,12 +120,12 @@ with tab1:
     )
     fig_funnel.update_traces(textposition="outside")
     st.plotly_chart(fig_funnel, use_container_width=True)
-    
-    st.markdown("""
+
+    st.markdown(f"""
         <div style="background-color:#e6f4ff;padding:15px;border-radius:10px;">
-        🧠 <b>Insight:</b> Conversion rate is {:.1f}%. There’s an opportunity to boost this number by strategically timing and placing promotions.
+         🧠 <b>Insight:</b> Conversion rate is {conversion_rate:.1f}%. There’s an opportunity to boost this through retargeting or urgency-based messaging.
         </div>
-    """.format(conversion_rate), unsafe_allow_html=True)
+    """, unsafe_allow_html=True)
 
 # --- TAB 2 ---
 with tab2:
@@ -177,8 +177,8 @@ with tab3:
         title="Views by Price Range"
     )
     st.plotly_chart(fig_price_buckets, use_container_width=True)
-    
-    fig_box = px.box(purchases, y="Price", color_discrete_sequence=[XIAOMI_ORANGE],
+
+    fig_box = px.box(purchases, y="price", color_discrete_sequence=[XIAOMI_ORANGE],
                      title="Price Range", points=False)
     st.plotly_chart(fig_box, use_container_width=True)
 
@@ -186,7 +186,6 @@ with tab3:
     desc_stats.index = ["Min", "Q1 (25%)", "Median", "Q3 (75%)", "Max", "Mean"]
     st.markdown("### Price Summary Table")
     st.dataframe(desc_stats.reset_index().rename(columns={"index": "Statistic", "price": "USD"}))
-
 
     if "basket" in purchases.columns and purchases["basket"].notna().sum() > 0:
         st.markdown("### Top 10 Basket Items")
